@@ -19,7 +19,7 @@ public class RoomRate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long rateID;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Enumerated(EnumType.STRING)

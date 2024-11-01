@@ -4,6 +4,7 @@
  */
 package entity;
 
+import enumType.RoomAvailabilityEnum;
 import java.util.List;
 import javax.persistence.*;
 /**
@@ -21,21 +22,69 @@ public class Room {
 
     @Column(nullable = false)
     private int roomSequence;
+    
+    @Column(nullable = false)
+    private String formattedRoomSequence;
 
     @Column(nullable = false)
-    private String status; // e.g., "Available", "Occupied", "Maintenance"
+    private RoomAvailabilityEnum status; // e.g., "Available", "Occupied", "Maintenance"
 
     @ManyToOne(optional = false)
     @JoinColumn(nullable = false)
     private RoomType roomType;
 
-    @OneToMany(mappedBy = "room")
-    private List<ReservationRoom> reservationRooms;
 
-    // Method to return formatted room number
-    public String getFormattedRoomNumber() {
-        return String.format("%02d%02d", floorNumber, roomSequence);
+    public Room(int floorNumber, int roomSequence, RoomAvailabilityEnum status, RoomType roomType) {
+        this.floorNumber = floorNumber;
+        this.roomSequence = roomSequence;
+        this.formattedRoomSequence = String.format("%02d%02d", floorNumber, roomSequence);
+        this.status = status;
+        this.roomType = roomType;
     }
 
-    // Getters, Setters, Constructors
+    public Long getRoomID() {
+        return roomID;
+    }
+
+    public void setRoomID(Long roomID) {
+        this.roomID = roomID;
+    }
+
+    public int getFloorNumber() {
+        return floorNumber;
+    }
+
+    public void setFloorNumber(int floorNumber) {
+        this.floorNumber = floorNumber;
+    }
+
+    public int getRoomSequence() {
+        return roomSequence;
+    }
+
+    public void setRoomSequence(int roomSequence) {
+        this.roomSequence = roomSequence;
+    }
+
+    public RoomAvailabilityEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(RoomAvailabilityEnum status) {
+        this.status = status;
+    }
+
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+    
+    // Method to return formatted room number
+    public String getFormattedRoomSequence() {
+        return formattedRoomSequence;
+    }
+
 }

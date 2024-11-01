@@ -38,7 +38,7 @@ public class Guest {
     @OneToMany(mappedBy = "guest")
     private List<Reservation> reservations;
     
-    Guest(String name, String email, String phoneNumber, String passportNumber, String username, String password) {
+    public Guest(String name, String email, String phoneNumber, String passportNumber, String username, String password) {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
