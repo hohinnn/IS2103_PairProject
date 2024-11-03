@@ -4,8 +4,7 @@
  */
 package ejb.session.stateless;
 
-import entity.Employee;
-import exceptions.EmployeeNotFoundException;
+import entity.Partner;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -14,12 +13,10 @@ import javax.ejb.Local;
  * @author hohin
  */
 @Local
-public interface EmployeeSessionbeanLocal {
+public interface PartnerSessionBeanLocal {
 
-    public Employee createEmployee(Employee employee);
+    public Partner createPartner(Partner partner);
 
-    public Employee loginEmployee(String username, String password) throws EmployeeNotFoundException;
-
-    public List<Employee> viewAllEmployees();
+    public List<Partner> viewAllPartners();
     
 }

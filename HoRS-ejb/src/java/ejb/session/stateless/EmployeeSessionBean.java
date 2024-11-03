@@ -17,7 +17,7 @@ import javax.persistence.PersistenceContext;
  * @author hohin
  */
 @Stateless
-public class EmployeeSessionbean implements EmployeeSessionbeanRemote, EmployeeSessionbeanLocal {
+public class EmployeeSessionBean implements EmployeeSessionBeanRemote, EmployeeSessionBeanLocal {
 
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
