@@ -26,7 +26,7 @@ public class Room {
     @Column(nullable = false)
     private String formattedRoomSequence;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private RoomAvailabilityEnum status; // e.g., "Available", "Occupied", "Maintenance"
 
     @ManyToOne(optional = false)

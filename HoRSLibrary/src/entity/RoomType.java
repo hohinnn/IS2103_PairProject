@@ -4,6 +4,7 @@
  */
 package entity;
 
+import enumType.RoomTypeEnum;
 import javax.persistence.*;
 import java.util.*;
 
@@ -18,8 +19,11 @@ public class RoomType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long roomTypeID;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+    //@Column(nullable = false, unique = true)
+    //private String name;
+    
+    @Enumerated(EnumType.STRING)
+    private RoomTypeEnum name;
 
     @Column
     private String description;
@@ -42,7 +46,7 @@ public class RoomType {
     @OneToMany(mappedBy = "roomType")
     private List<RoomRate> roomRates;
 
-    public RoomType(String name, String description, double size, String bedType, int capacity, String amenities) {
+    public RoomType(RoomTypeEnum name, String description, double size, String bedType, int capacity, String amenities) {
         this.name = name;
         this.description = description;
         this.size = size;
@@ -59,11 +63,11 @@ public class RoomType {
         this.roomTypeID = roomTypeID;
     }
 
-    public String getName() {
+    public RoomTypeEnum getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(RoomTypeEnum name) {
         this.name = name;
     }
 
