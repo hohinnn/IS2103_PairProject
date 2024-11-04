@@ -24,12 +24,14 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public RoomRate createRoomRate(RoomRate roomRate) {
         em.persist(roomRate);
         em.flush();
         return roomRate;
     }
     
+    @Override
     public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException {
         try {
             RoomRate roomRate = em.find(RoomRate.class, rateID);
@@ -44,6 +46,7 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
         }
     }
     
+    @Override
     public void deleteRoomRate(Long rateID) throws RoomRateNotFoundException {
         try {
             RoomRate roomRate = em.find(RoomRate.class, rateID);
@@ -53,6 +56,7 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
         }
     }
     
+    @Override
     public RoomRate getRoomRate(Long rateID) throws RoomRateNotFoundException {
         try {
             RoomRate roomRate = em.find(RoomRate.class, rateID);

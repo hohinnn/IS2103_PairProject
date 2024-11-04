@@ -22,12 +22,14 @@ public class EmployeeSessionBean implements EmployeeSessionBeanRemote, EmployeeS
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public Employee createEmployee(Employee employee) {
         em.persist(employee);
         em.flush();
         return employee;
     }
     
+    @Override
     public Employee loginEmployee(String username, String password) throws EmployeeNotFoundException {
         try {
             return em.createQuery("SELECT e FROM Employee e WHERE e.username = :username AND e.password = :password", Employee.class)
@@ -40,6 +42,7 @@ public class EmployeeSessionBean implements EmployeeSessionBeanRemote, EmployeeS
         
     }
     
+    @Override
     public List<Employee> viewAllEmployees() {
         return em.createQuery("SELECT e FROM Employee e", Employee.class).getResultList();
     }

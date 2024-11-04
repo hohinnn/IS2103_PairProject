@@ -24,12 +24,14 @@ public class RoomTypeSessionBean implements RoomTypeSessionBeanRemote, RoomTypeS
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public RoomType createRoomType(RoomType roomType) {
         em.persist(roomType);
         em.flush();
         return roomType;
     }
     
+    @Override
     public RoomType viewRoomType(Long roomTypeID) throws RoomTypeNotFoundException {
         try {
             return em.find(RoomType.class, roomTypeID);
@@ -38,6 +40,7 @@ public class RoomTypeSessionBean implements RoomTypeSessionBeanRemote, RoomTypeS
         }
     }
     
+    @Override
     public void updateRoomType(Long roomTypeID, String name, String description, double size, String bedType, int capacity, String amenities) {
         RoomType roomType = em.find(RoomType.class, roomTypeID);
         if (roomType != null) {
@@ -51,6 +54,7 @@ public class RoomTypeSessionBean implements RoomTypeSessionBeanRemote, RoomTypeS
         }
     }
     
+    @Override
     public boolean deleteRoomType(Long roomTypeID) throws IllegalStateException, RoomTypeNotFoundException{
             RoomType roomType = em.find(RoomType.class, roomTypeID);
             if (roomType != null) {
@@ -73,9 +77,8 @@ public class RoomTypeSessionBean implements RoomTypeSessionBeanRemote, RoomTypeS
             }
         }
     
+    @Override
     public List<RoomType> getAllRoomTypes() {
         return em.createQuery("SELECT rt FROM RoomType rt", RoomType.class).getResultList();
-    }
-
-    
+    } 
 }

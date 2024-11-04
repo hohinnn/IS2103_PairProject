@@ -23,12 +23,14 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public Room createRoom(Room room) {
         em.persist(room);
         em.flush();
         return room;
     }
     
+    @Override
     public void updateRoomStatus(String formattedRoomSequence, RoomAvailabilityEnum newStatus) throws RoomNotFoundException {
         try {
             Room room = em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)
@@ -41,6 +43,7 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
         }
     }
     
+    @Override
     public void deleteRoom(String formattedRoomSequence) throws RoomNotFoundException {
         try {
             Room room = em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)
@@ -52,8 +55,8 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
         }
     }
     
+    @Override
     public List<Room> getAllRooms() {
         return em.createQuery("SELECT r FROM Room r", Room.class).getResultList();
     }
-    
 }

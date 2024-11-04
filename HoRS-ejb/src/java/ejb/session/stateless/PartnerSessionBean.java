@@ -20,15 +20,16 @@ public class PartnerSessionBean implements PartnerSessionBeanRemote, PartnerSess
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public Partner createPartner(Partner partner) {
         em.persist(partner);
         em.flush(); 
         return partner;
     }
     
+    @Override
     public List<Partner> viewAllPartners() {
         return em.createQuery("SELECT p FROM Partner p")
                 .getResultList();
     }
-
 }

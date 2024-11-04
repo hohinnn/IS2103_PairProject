@@ -23,12 +23,14 @@ public class GuestSessionBean implements GuestSessionBeanRemote, GuestSessionBea
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public Guest registerGuest(Guest guest) {
         em.persist(guest);
         em.flush();
         return guest;
     }
     
+    @Override
     public Guest loginGuest(String username) throws GuestNotFoundException {
         try {
             return em.createQuery("SELECT g FROM Guest g WHERE g.username = :username", Guest.class)
@@ -39,18 +41,20 @@ public class GuestSessionBean implements GuestSessionBeanRemote, GuestSessionBea
         }
     }
     
+    @Override
     public Guest viewGuestDetails(Long guestID) {
         return em.find(Guest.class, guestID);
     }
     
+    @Override
     public List<Guest> getAllGuests() {
         return em.createQuery("SELECT g FROM Guest g", Guest.class).getResultList();
     }
     
+    @Override
     public List<Reservation> getGuestReservations(Long guestID) {
         return em.createQuery("SELECT r FROM Reservation r WHERE r.guest.guestID = :guestID", Reservation.class)
                  .setParameter("guestID", guestID)
                  .getResultList();
-    }
-    
+    } 
 }

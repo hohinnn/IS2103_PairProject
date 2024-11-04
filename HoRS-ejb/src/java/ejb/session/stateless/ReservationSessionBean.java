@@ -19,12 +19,10 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
 
+    @Override
     public Reservation createReservation(Reservation reservation) {
         em.persist(reservation);
         em.flush();
         return reservation;
     }
-    
-    
-    
 }
