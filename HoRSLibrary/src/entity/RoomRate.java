@@ -5,6 +5,7 @@
 package entity;
 
 import enumType.RoomRateTypeEnum;
+import java.io.Serializable;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -13,7 +14,7 @@ import java.util.Date;
  *
  * @author hohin
  */
-public class RoomRate {
+public class RoomRate implements Serializable {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +39,10 @@ public class RoomRate {
     @JoinColumn(nullable = false)
     private RoomType roomType;
 
+    public RoomRate(){}
+    
     public RoomRate(String name, RoomRateTypeEnum rateType, BigDecimal ratePerNight, Date startDate, Date endDate) {
+        this();
         this.name = name;
         this.rateType = rateType;
         this.ratePerNight = ratePerNight;

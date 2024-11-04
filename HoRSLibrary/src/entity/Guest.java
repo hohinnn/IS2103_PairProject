@@ -4,6 +4,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import java.util.*;
 import javax.persistence.*;
 
@@ -12,7 +13,7 @@ import javax.persistence.*;
  * @author hohin
  */
 @Entity
-public class Guest {
+public class Guest implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long guestID;
@@ -38,6 +39,8 @@ public class Guest {
     @OneToMany(mappedBy = "guest")
     private List<Reservation> reservations;
     
+    public Guest(){}
+    
     public Guest(String name, String email, String phoneNumber, String passportNumber, String username, String password) {
         this.name = name;
         this.email = email;
@@ -45,6 +48,7 @@ public class Guest {
         this.passportNumber = passportNumber;
         this.username = username;
         this.password = password;
+        this.reservations = new ArrayList<Reservation>();
     }
 
     public Long getGuestID() {

@@ -9,6 +9,7 @@ import enumType.RoomRateTypeEnum;
 import exceptions.RoomRateNotFoundException;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -65,4 +66,10 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
             throw new RoomRateNotFoundException("Room Rate: " + rateID + " not found.");
         }
     }
+    
+    @Override
+    public List<RoomRate> getAllRoomRates() {
+        return em.createQuery("SELECT rr FROM RoomRate rr", RoomRate.class).getResultList();
+    }
+    
 }

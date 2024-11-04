@@ -4,6 +4,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -13,7 +14,7 @@ import java.util.Date;
  * @author hohin
  */
 @Entity
-public class Reservation {
+public class Reservation implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reservationID;
@@ -44,7 +45,10 @@ public class Reservation {
     @JoinColumn(nullable = true)
     private Room room; // The specific room assigned to this reservation
 
+    public Reservation(){}
+    
     public Reservation(Date checkInDate, Date checkOutDate, String status, BigDecimal totalAmount, Guest guest, RoomType roomType, Room room) {
+        this();
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.status = status;

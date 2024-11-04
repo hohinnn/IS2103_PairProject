@@ -12,8 +12,15 @@ import ejb.session.stateless.RoomRateSessionBeanRemote;
 import ejb.session.stateless.RoomSessionBeanRemote;
 import ejb.session.stateless.RoomTypeSessionBeanRemote;
 import entity.Employee;
+import entity.Partner;
+import entity.Room;
+import entity.RoomRate;
+import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
+import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
+import exceptions.RoomTypeNotFoundException;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -32,6 +39,7 @@ public class MainApp {
     private RoomTypeSessionBeanRemote roomTypeSessionBeanRemote;
     
     private Employee currentEmployee = null;
+    private Scanner scanner;
 
     public MainApp() {}
 
@@ -43,10 +51,10 @@ public class MainApp {
         this.roomRateSessionBeanRemote = roomRateSessionBeanRemote;
         this.roomSessionBeanRemote = roomSessionBeanRemote;
         this.roomTypeSessionBeanRemote = roomTypeSessionBeanRemote;
+        this.scanner = new Scanner(System.in);
     }
     
     public void runApp() {
-        Scanner scanner = new Scanner(System.in);
         Integer response = 0;
         
         while(true)
@@ -76,10 +84,7 @@ public class MainApp {
                 }
             }
             
-            if(response == 6)
-            {
-                break;
-            }
+            return;
         }
         
     }
@@ -95,6 +100,8 @@ public class MainApp {
         try {
             currentEmployee = employeeSessionBeanRemote.loginEmployee(username, password);
             System.out.println("Login successful! Welcome " + currentEmployee.getUsername() + ".\n");
+            EmployeeAccessRightEnum accessRight = currentEmployee.getAccessRight();
+            menuMain(accessRight);
         } catch (EmployeeNotFoundException e) {
             System.out.println("Invalid login: " + e.getMessage());
         }
@@ -105,48 +112,70 @@ public class MainApp {
         System.out.println("You have logged out successfully.\n");
     }
     
-     private void menuMain() {
-        Scanner scanner = new Scanner(System.in);
+     private void menuMain(EmployeeAccessRightEnum accessRight) {
         Integer response;
 
         while (true) {
-            displayMenuOptions();
-            System.out.print("> ");
+            if (accessRight == EmployeeAccessRightEnum.SYSTEM_ADMIN) {
+                displayMenuOptionsSystemAdmin();
+            } else if (accessRight == EmployeeAccessRightEnum.OPERATION_MANAGER) {
+                displayMenuOptionsOperationManager();
+            } else if (accessRight == EmployeeAccessRightEnum.SALES_MANAGER) {
+                displayMenuOptionsSalesManager();
+            } else {
+                displayMenuOptionsGuestRelationOfficer();
+            }
+            System.out.print("Choose an option: ");
             response = scanner.nextInt();
 
             if (response == 1) {
                 doLogout();
                 return;
             } else {
-                executeMenuOption(response);
+                executeMenuOption(response, accessRight);
             }
         }
     }
 
-    private void displayMenuOptions() {
-        System.out.println("*** HoRS Management Client ***\n");
+    private void displayMenuOptionsSystemAdmin() {
+        System.out.println("*** HoRS Management Client -- System Administrator ***\n");
         System.out.println("1: Logout");
         System.out.println("2: Create New Employee");
         System.out.println("3: View All Employees");
         System.out.println("4: Create New Partner");
         System.out.println("5: View All Partners");
-        System.out.println("6: Create New Room Type");
-        System.out.println("7: View Room Type Details");
-        System.out.println("8: Update Room Type");
-        System.out.println("9: Delete Room Type");
-        System.out.println("10: View All Room Types");
-        System.out.println("11: Create New Room");
-        System.out.println("12: View All Rooms");
-        System.out.println("13: View Room Allocation Exception Report");
-        System.out.println("14: Create New Room Rate");
-        System.out.println("15: View Room Rate Details");
-        System.out.println("16: Update Room Rate");
-        System.out.println("17: Delete Room Rate");
-        System.out.println("18: View All Room Rates");
+    }
+    
+    private void displayMenuOptionsOperationManager() {
+        System.out.println("*** HoRS Management Client -- Operation Manager ***\n");
+        System.out.println("1: Logout");
+        System.out.println("2: Create New Room Type");
+        System.out.println("3: View Room Type Details");
+        System.out.println("4: View All Room Types");
+        System.out.println("5: Create New Room");
+        System.out.println("6: View All Rooms");
+        System.out.println("7: View Room Allocation Exception Report");
+    }
+    
+    private void displayMenuOptionsSalesManager() {
+        System.out.println("*** HoRS Management Client -- Sales Manager ***\n");
+        System.out.println("1: Logout");
+        System.out.println("2: Create New Room Rate");
+        System.out.println("3: View Room Rate Details");
+        System.out.println("4: View All Room Rates");
+    }
+    
+    private void displayMenuOptionsGuestRelationOfficer() {
+        System.out.println("*** HoRS Management Client -- Guest Relation Officer ***\n");
+        System.out.println("1: Logout");
+        System.out.println("2: Walk-in Reserve Room");
+        System.out.println("3: Check-in Guest");
+        System.out.println("4: Check-out Guest");
     }
 
-    private void executeMenuOption(int option) {
-        switch (option) {
+    private void executeMenuOption(int option, EmployeeAccessRightEnum accessRight) {
+        if (accessRight == EmployeeAccessRightEnum.SYSTEM_ADMIN) {
+            switch (option) {
             case 2:
                 createNewEmployee();
                 break;
@@ -159,54 +188,66 @@ public class MainApp {
             case 5:
                 viewAllPartners();
                 break;
-            case 6:
+            default:
+                System.out.println("Invalid option, please try again.");
+            }
+        } else if (accessRight == EmployeeAccessRightEnum.OPERATION_MANAGER) {
+            switch (option) {
+            case 2:
                 createNewRoomType();
                 break;
-            case 7:
+            case 3:
                 viewRoomTypeDetails();
                 break;
-            case 8:
-                updateRoomType();
-                break;
-            case 9:
-                deleteRoomType();
-                break;
-            case 10:
+            case 4:
                 viewAllRoomTypes();
                 break;
-            case 11:
+            case 5:
                 createNewRoom();
                 break;
-            case 12:
+            case 6:
                 viewAllRooms();
                 break;
-            case 13:
+            case 7:
                 viewRoomAllocationExceptionReport();
                 break;
-            case 14:
+            default:
+                System.out.println("Invalid option, please try again.");
+            }
+        } else if (accessRight == EmployeeAccessRightEnum.SALES_MANAGER) {
+            switch (option) {
+            case 2:
                 createNewRoomRate();
                 break;
-            case 15:
+            case 3:
                 viewRoomRateDetails();
                 break;
-            case 16:
-                updateRoomRate();
-                break;
-            case 17:
-                deleteRoomRate();
-                break;
-            case 18:
+            case 4:
                 viewAllRoomRates();
                 break;
             default:
                 System.out.println("Invalid option, please try again.");
-        }
+            }
+        } else if (accessRight == EmployeeAccessRightEnum.GUEST_RELATION_OFFICER ) {
+            switch (option) {
+            case 2:
+                walkInSearchRoom();
+                break;
+            case 3:
+                checkInGuest();
+                break;
+            case 4:
+                checkOutGuest();
+                break;
+            default:
+                System.out.println("Invalid option, please try again.");
+            }  
+        } 
     }
 
     // Methods for each menu option
     private void createNewEmployee() {
-        Scanner scanner = new Scanner(System.in);
-
+        System.out.print("*** New Employee *** ");
         System.out.print("Enter username: ");
         String username = scanner.nextLine().trim();
 
@@ -252,84 +293,279 @@ public class MainApp {
     }
 
     private void viewAllEmployees() {
-        System.out.println("Viewing all employees...");
-        // Implementation goes here
+        System.out.println("\n*** Employee List ***");
+        List<Employee> employees = employeeSessionBeanRemote.viewAllEmployees();
+        for (Employee e : employees) {
+            System.out.println("ID: "+ e.getEmployeeID()+ " | Name: " + e.getUsername() + "| Role: " + e.getAccessRight());
+        }
     }
 
     private void createNewPartner() {
-        System.out.println("Creating new partner...");
-        // Implementation goes here
+        System.out.print("\n*** New Partner *** ");
+        System.out.print("Enter Partner Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine().trim();
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine().trim();
+
+        try {
+            Partner partner = partnerSessionBeanRemote.createPartner(new Partner(name, username, password));
+            System.out.println("New Partner created successfully! Partner ID: " + partner.getPartnerID() + "\nPartner Name: " + partner.getPartnerName());
+        } catch (Exception e) {
+            System.out.println("Error creating Partner: " + e.getMessage());
+        }
     }
 
     private void viewAllPartners() {
-        System.out.println("Viewing all partners...");
-        // Implementation goes here
+        System.out.println("\n*** Partner List ***");
+        List<Partner> partners = partnerSessionBeanRemote.viewAllPartners();
+        for (Partner p : partners) {
+            System.out.println(p.getPartnerName());
+        }
     }
 
     private void createNewRoomType() {
-        System.out.println("Creating new room type...");
-        // Implementation goes here
+        System.out.print("\n*** New Room Type *** ");
+        System.out.print("Enter Room Type Option (1.Deluxe 2.Premier 3.Family 4.Junior Suite 5.Grand Suite): ");
+        int name = scanner.nextInt();
+        scanner.nextLine();
+        System.out.print("Enter Description: ");
+        String description = scanner.nextLine();
+        System.out.print("Enter Size: ");
+        double size = scanner.nextDouble();
+        scanner.nextLine();
+        System.out.print("Enter Bed Type: ");
+        String bedType = scanner.nextLine();
+        System.out.print("Enter Capacity: ");
+        int capacity = scanner.nextInt();
+        scanner.nextLine();
+        System.out.print("Enter Amenities: ");
+        String amenities = scanner.nextLine();
+        
+        RoomTypeEnum rtEnum = null;
+        
+        switch(name) {
+            case 1:
+                rtEnum = RoomTypeEnum.DELUXE;
+            case 2:
+                rtEnum = RoomTypeEnum.PREMIER;
+            case 3:
+                rtEnum = RoomTypeEnum.FAMILY;
+            case 4:
+                rtEnum = RoomTypeEnum.JUNIOR_SUITE;
+            case 5:
+                rtEnum= RoomTypeEnum.GRAND_SUITE;
+            default:
+                System.out.println("Error!"); //update message
+        }
+        
+        try {
+            RoomType rt = roomTypeSessionBeanRemote.createRoomType(new RoomType(rtEnum, description, size, bedType, capacity, amenities));
+            System.out.println("New Room Type created successfully! Room Type ID: " + rt.getRoomTypeID() + "\nRoom Type Name: " + rt.getName());
+        } catch (Exception e) {
+            System.out.println("Error creating Room Rype: " + e.getMessage());
+        }
+        
     }
 
     private void viewRoomTypeDetails() {
-        System.out.println("Viewing room type details...");
-        // Implementation goes here
+        System.out.println("\n*** View Room Type Details ***");
+        System.out.println("\nEnter Room Type ID:");
+        long roomTypeID = scanner.nextLong();
+        try {
+            while (true) {
+                System.out.println("\n*** Room Type Details ***");
+                RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeID);
+                
+                System.out.println("Name: " + roomType.getName());
+                System.out.println("Description: " + roomType.getDescription());
+                System.out.println("Size: " + roomType.getSize());
+                System.out.println("Bed Type: " + roomType.getBedType());
+                System.out.println("Capacity: " + roomType.getCapacity());
+                System.out.println("Amenities: " + roomType.getAmenities());
+                
+                System.out.println();
+                
+                System.out.println("1. Update Room Type");
+                System.out.println("2. Delete Room Type");
+                System.out.println("3. Exit");
+                System.out.print("Choose an option: ");
+                int choice = scanner.nextInt();
+                scanner.nextLine(); 
+
+                switch (choice) {
+                    case 1:
+                        updateRoomType();
+                        break;
+                    case 2:
+                        deleteRoomType();
+                        break;
+                    case 3:
+                        return;
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                }
+            }
+        } catch (RoomTypeNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
+    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void updateRoomType() {
         System.out.println("Updating room type...");
         // Implementation goes here
     }
 
+    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void deleteRoomType() {
         System.out.println("Deleting room type...");
         // Implementation goes here
     }
 
     private void viewAllRoomTypes() {
-        System.out.println("Viewing all room types...");
-        // Implementation goes here
+        System.out.println("\n*** Room Type List ***");
+        List<RoomType> roomTypes = roomTypeSessionBeanRemote.getAllRoomTypes();
+        for (RoomType r : roomTypes) {
+            System.out.println("ID: "+ r.getRoomTypeID() + " | Name: " + r.getName());
+        }
     }
 
     private void createNewRoom() {
-        System.out.println("Creating new room...");
-        // Implementation goes here
+        System.out.print("\n*** New Room *** ");
+        System.out.print("Enter Partner Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine().trim();
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine().trim();
+
+        try {
+            Partner partner = partnerSessionBeanRemote.createPartner(new Partner(name, username, password));
+            System.out.println("New Partner created successfully! Partner ID: " + partner.getPartnerID() + "\nPartner Name: " + partner.getPartnerName());
+        } catch (Exception e) {
+            System.out.println("Error creating employee: " + e.getMessage());
+        }
     }
 
     private void viewAllRooms() {
-        System.out.println("Viewing all rooms...");
-        // Implementation goes here
+        System.out.println("\n*** Room List ***");
+        List<Room> rooms = roomSessionBeanRemote.getAllRooms();
+        for (Room r : rooms) {
+            System.out.println("Room Number: "+ r.getFormattedRoomSequence() + " | Status: " + r.getStatus());
+        }
     }
 
+    //NOT DONE
     private void viewRoomAllocationExceptionReport() {
         System.out.println("Viewing room allocation exception report...");
         // Implementation goes here
     }
 
+    //NOT DONE
     private void createNewRoomRate() {
-        System.out.println("Creating new room rate...");
-        // Implementation goes here
+        System.out.print("\n*** New Room *** ");
+        System.out.print("Enter Partner Name: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine().trim();
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine().trim();
+
+        try {
+            Partner partner = partnerSessionBeanRemote.createPartner(new Partner(name, username, password));
+            System.out.println("New Partner created successfully! Partner ID: " + partner.getPartnerID() + "\nPartner Name: " + partner.getPartnerName());
+        } catch (Exception e) {
+            System.out.println("Error creating employee: " + e.getMessage());
+        }
     }
 
     private void viewRoomRateDetails() {
-        System.out.println("Viewing room rate details...");
-        // Implementation goes here
+        while (true) {
+            System.out.println("\n*** Room Rate Details ***");
+            //show room details here
+            System.out.println("1. Update Room Rate");
+            System.out.println("2. Delete Room Rate");
+            System.out.println("3. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); 
+
+            switch (choice) {
+                case 1:
+                    updateRoomRate();
+                    break;
+                case 2:
+                    deleteRoomRate();
+                    break;
+                case 3:
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
     }
 
+    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void updateRoomRate() {
         System.out.println("Updating room rate...");
         // Implementation goes here
     }
 
+    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void deleteRoomRate() {
         System.out.println("Deleting room rate...");
         // Implementation goes here
     }
 
     private void viewAllRoomRates() {
-        System.out.println("Viewing all room rates...");
+        System.out.println("\n*** Room Rates List ***");
+        List<RoomRate> roomRates = roomRateSessionBeanRemote.getAllRoomRates();
+        for (RoomRate r : roomRates) {
+            System.out.println("ID: "+ r.getRateID() + " | Name: " + r.getName() +  "| Role: " + r.getRateType());
+        }
+    }
+    
+    //NOT DONE
+    private void walkInSearchRoom() {
+        while (true) {
+            System.out.println("\n--- Room Search ---");
+            //show search room details here
+            System.out.println("1. Update Room Rate");
+            System.out.println("2. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); 
+
+            switch (choice) {
+                case 1:
+                    walkInReserveRoom();
+                    break;
+                case 2:
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+    
+    //NOT DONE
+    private void walkInReserveRoom() {
+        System.out.println("Deleting room rate...");
         // Implementation goes here
     }
     
+    //NOT DONE
+    private void checkInGuest() {
+        System.out.println("Check in guest");
+        // Implementation goes here
+    }
+    
+    //NOT DONE
+    private void checkOutGuest() {
+        System.out.println("Check out guest");
+        // Implementation goes here
+    }
     
 }

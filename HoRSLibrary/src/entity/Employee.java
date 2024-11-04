@@ -5,6 +5,7 @@
 package entity;
 
 import enumType.EmployeeAccessRightEnum;
+import java.io.Serializable;
 import java.util.*;
 import javax.persistence.*;
 
@@ -13,7 +14,7 @@ import javax.persistence.*;
  * @author hohin
  */
 @Entity
-public class Employee {
+public class Employee implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long employeeID;
@@ -26,8 +27,11 @@ public class Employee {
 
     @Enumerated(EnumType.STRING)
     private EmployeeAccessRightEnum accessRight;
+    
+    public Employee(){}
 
     public Employee(String username, String password, EmployeeAccessRightEnum accessRight) {
+        this();
         this.username = username;
         this.password = password;
         this.accessRight = accessRight;

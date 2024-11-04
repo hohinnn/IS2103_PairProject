@@ -5,6 +5,7 @@
 package entity;
 
 import enumType.RoomAvailabilityEnum;
+import java.io.Serializable;
 import java.util.List;
 import javax.persistence.*;
 /**
@@ -12,7 +13,7 @@ import javax.persistence.*;
  * @author hohin
  */
 @Entity
-public class Room {
+public class Room implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long roomID;
@@ -33,8 +34,10 @@ public class Room {
     @JoinColumn(nullable = false)
     private RoomType roomType;
 
-
+    public Room(){}
+    
     public Room(int floorNumber, int roomSequence, RoomAvailabilityEnum status, RoomType roomType) {
+        this();
         this.floorNumber = floorNumber;
         this.roomSequence = roomSequence;
         this.formattedRoomSequence = String.format("%02d%02d", floorNumber, roomSequence);

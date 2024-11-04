@@ -5,6 +5,7 @@
 package entity;
 
 import enumType.RoomTypeEnum;
+import java.io.Serializable;
 import javax.persistence.*;
 import java.util.*;
 
@@ -14,7 +15,7 @@ import java.util.*;
  */
 
 @Entity
-public class RoomType {
+public class RoomType implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long roomTypeID;
@@ -46,13 +47,18 @@ public class RoomType {
     @OneToMany(mappedBy = "roomType")
     private List<RoomRate> roomRates;
 
+    public RoomType(){}
+    
     public RoomType(RoomTypeEnum name, String description, double size, String bedType, int capacity, String amenities) {
+        this();
         this.name = name;
         this.description = description;
         this.size = size;
         this.bedType = bedType;
         this.capacity = capacity;
         this.amenities = amenities;
+        this.rooms = new ArrayList<Room>();
+        this.roomRates = new ArrayList<RoomRate>();
     }
 
     public Long getRoomTypeID() {
