@@ -7,6 +7,7 @@ package ejb.session.stateless;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.RoomRateTypeEnum;
+import exceptions.RoomRateInUseException;
 import exceptions.RoomRateNotFoundException;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
@@ -51,14 +52,26 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     }
     
     @Override
-    public void deleteRoomRate(Long rateID) throws RoomRateNotFoundException {
-        try {
-            RoomRate roomRate = em.find(RoomRate.class, rateID);
-            em.remove(roomRate);
-        } catch (NoResultException e) {
-            throw new RoomRateNotFoundException("Room Rate: " + rateID + " not found.");
+    public void deleteRoomRate(Long rateID) throws RoomRateNotFoundException, RoomRateInUseException {
+        RoomRate roomRate = em.find(RoomRate.class, rateID);
+
+        if (roomRate == null) {
+            throw new RoomRateNotFoundException("Room Rate ID " + rateID + " not found.");
         }
+
+        // Check if the room rate is associated with any reservations
+        Query query = em.createQuery("SELECT COUNT(r) FROM Reservation r WHERE r.roomRate = :roomRate");
+        query.setParameter("roomRate", roomRate);
+        Long count = (Long) query.getSingleResult();
+
+        if (count > 0) {
+            throw new RoomRateInUseException("Room Rate ID " + rateID + " is associated with existing reservations and cannot be deleted.");
+        }
+
+        // Proceed with deletion if not associated with any reservations
+        em.remove(roomRate);
     }
+
     
     @Override
     public RoomRate getRoomRate(Long rateID) throws RoomRateNotFoundException {

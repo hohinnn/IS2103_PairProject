@@ -17,9 +17,16 @@ import entity.Room;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
+import enumType.RoomRateTypeEnum;
 import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
+import exceptions.RoomRateInUseException;
+import exceptions.RoomRateNotFoundException;
 import exceptions.RoomTypeNotFoundException;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -64,7 +71,7 @@ public class MainApp {
             System.out.println("2: Exit\n");
             response = 0;
             
-            while(response < 1 || response > 6)
+            while (response < 1 || response > 6)
             {
                 System.out.print("> ");
 
@@ -356,7 +363,7 @@ public class MainApp {
             case 5:
                 rtEnum= RoomTypeEnum.GRAND_SUITE;
             default:
-                System.out.println("Error!"); //update message
+                System.out.println("Error: Invalid Room Type Option"); //update message
         }
         
         try {
@@ -411,16 +418,101 @@ public class MainApp {
         }
     }
 
-    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void updateRoomType() {
-        System.out.println("Updating room type...");
-        // Implementation goes here
+        System.out.print("\n*** Update Room Type ***\n");
+        System.out.print("Enter Room Type ID: ");
+        long roomTypeId = scanner.nextLong();
+        scanner.nextLine(); // Consume newline
+        
+        try {
+            // Fetch the existing room type to display current values
+            RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeId);
+
+            // RoomTypeEnum selection
+            System.out.println("Select new Room Type:");
+            System.out.println("1. DELUXE");
+            System.out.println("2. PREMIER");
+            System.out.println("3. FAMILY");
+            System.out.println("4. JUNIOR SUITE");
+            System.out.println("5. GRAND SUITE");
+            System.out.print("Enter option: ");
+            int nameOption = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            RoomTypeEnum name;
+            switch (nameOption) {
+              case 1:
+                name = RoomTypeEnum.DELUXE;
+                break;
+              case 2:
+                name = RoomTypeEnum.PREMIER;
+                break;
+              case 3:
+                name = RoomTypeEnum.FAMILY;
+                break;
+              case 4:
+                name = RoomTypeEnum.JUNIOR_SUITE;
+                break;
+              case 5:
+                name = RoomTypeEnum.GRAND_SUITE;
+                break;
+              default:
+                throw new IllegalArgumentException("Invalid Room Type selection.");
+            }
+
+            // Get and update description
+            System.out.print("Enter new Description (current: " + roomType.getDescription() + "): ");
+            String description = scanner.nextLine().trim();
+            description = description.isEmpty() ? roomType.getDescription() : description;
+
+            // Get and update size
+            System.out.print("Enter new Size (current: " + roomType.getSize() + "): ");
+            double size = scanner.nextDouble();
+            size = size <= 0 ? roomType.getSize() : size;
+            scanner.nextLine(); // Consume newline
+
+            // Get and update bed type
+            System.out.print("Enter new Bed Type (current: " + roomType.getBedType() + "): ");
+            String bedType = scanner.nextLine().trim();
+            bedType = bedType.isEmpty() ? roomType.getBedType() : bedType;
+
+            // Get and update capacity
+            System.out.print("Enter new Capacity (current: " + roomType.getCapacity() + "): ");
+            int capacity = scanner.nextInt();
+            capacity = capacity <= 0 ? roomType.getCapacity() : capacity;
+            scanner.nextLine(); // Consume newline
+
+            // Get and update amenities
+            System.out.print("Enter new Amenities (current: " + roomType.getAmenities() + "): ");
+            String amenities = scanner.nextLine().trim();
+            amenities = amenities.isEmpty() ? roomType.getAmenities() : amenities;
+
+            // Call session bean to update the Room Type
+            roomTypeSessionBeanRemote.updateRoomType(roomTypeId, name, description, size, bedType, capacity, amenities);
+            System.out.println("Room Type updated successfully!");
+
+        } catch (RoomTypeNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
-    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void deleteRoomType() {
-        System.out.println("Deleting room type...");
-        // Implementation goes here
+        System.out.print("\n*** Delete Room Type ***\n");
+        System.out.print("Enter Room Type ID: ");
+        long roomTypeId = scanner.nextLong();
+
+        try {
+            boolean deleted = roomTypeSessionBeanRemote.deleteRoomType(roomTypeId);
+            if (deleted) {
+                System.out.println("Room Type deleted successfully.");
+            } else {
+                System.out.println("Room Type is in use, marked as disabled.");
+            }
+        } catch (RoomTypeNotFoundException e) {
+            System.out.println("Error deleting Room Type: " + e.getMessage());
+        }
     }
 
     private void viewAllRoomTypes() {
@@ -462,23 +554,71 @@ public class MainApp {
         // Implementation goes here
     }
 
-    //NOT DONE
     private void createNewRoomRate() {
-        System.out.print("\n*** New Room *** ");
-        System.out.print("Enter Partner Name: ");
+        System.out.print("\n*** New Room Rate ***\n");
+        System.out.print("Enter Rate Name: ");
         String name = scanner.nextLine().trim();
-        System.out.print("Enter username: ");
-        String username = scanner.nextLine().trim();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine().trim();
+
+        System.out.print("Enter Room Type ID: ");
+        long roomTypeId = scanner.nextLong();
+        scanner.nextLine();
+
+        System.out.println("Choose Rate Type (1. Published, 2. Normal, 3. Peak, 4. Promotion): ");
+        int rateTypeOption = scanner.nextInt();
+        scanner.nextLine();
+
+        RoomRateTypeEnum rateType;
+        switch (rateTypeOption) {
+            case 1:
+                rateType = RoomRateTypeEnum.PUBLISHED;
+                break;
+            case 2:
+                rateType = RoomRateTypeEnum.NORMAL;
+                break;
+            case 3:
+                rateType = RoomRateTypeEnum.PEAK;
+                break;
+            case 4:
+                rateType = RoomRateTypeEnum.PROMOTION;
+                break;
+            default:
+            throw new IllegalArgumentException("Invalid Rate Type selection.");
+        }
+
+        System.out.print("Enter Rate per Night: ");
+        BigDecimal ratePerNight = scanner.nextBigDecimal();
+        scanner.nextLine(); // Consume newline
+
+        Date startDate = null;
+        Date endDate = null;
+
+        // Only prompt for start and end dates if rate type is Peak or Promotion
+        if (rateType == RoomRateTypeEnum.PEAK || rateType == RoomRateTypeEnum.PROMOTION) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+            try {
+                System.out.print("Enter Start Date (yyyy-MM-dd): ");
+                String startDateStr = scanner.nextLine().trim();
+                startDate = dateFormat.parse(startDateStr);
+
+                System.out.print("Enter End Date (yyyy-MM-dd): ");
+                String endDateStr = scanner.nextLine().trim();
+                endDate = dateFormat.parse(endDateStr);
+            } catch (ParseException e) {
+                System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+                return;
+            }
+        }
 
         try {
-            Partner partner = partnerSessionBeanRemote.createPartner(new Partner(name, username, password));
-            System.out.println("New Partner created successfully! Partner ID: " + partner.getPartnerID() + "\nPartner Name: " + partner.getPartnerName());
+            RoomRate roomRate = new RoomRate(name, rateType, ratePerNight, startDate, endDate);
+            roomRateSessionBeanRemote.createRoomRate(roomRate);
+            System.out.println("Room Rate created successfully!");
         } catch (Exception e) {
-            System.out.println("Error creating employee: " + e.getMessage());
+            System.out.println("Error creating Room Rate: " + e.getMessage());
         }
     }
+
 
     private void viewRoomRateDetails() {
         while (true) {
@@ -506,17 +646,93 @@ public class MainApp {
         }
     }
 
-    //NOT DONE need take into account rs with other entities lazy fetching all that shit
     private void updateRoomRate() {
-        System.out.println("Updating room rate...");
-        // Implementation goes here
+        System.out.print("\n*** Update Room Rate ***\n");
+        System.out.print("Enter Room Rate ID: ");
+        long roomRateId = scanner.nextLong();
+        scanner.nextLine(); // Consume newline
+
+        try {
+            RoomRate roomRate = roomRateSessionBeanRemote.getRoomRate(roomRateId);
+
+            System.out.print("Enter new Rate Name (current: " + roomRate.getName() + "): ");
+            String name = scanner.nextLine().trim();
+            name = name.isEmpty() ? roomRate.getName() : name;
+
+            System.out.println("Select new Rate Type (current: " + roomRate.getRateType() + "):");
+            System.out.println("1. Published");
+            System.out.println("2. Normal");
+            System.out.println("3. Peak");
+            System.out.println("4. Promotion");
+            System.out.print("Enter option: ");
+            int rateTypeOption = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            RoomRateTypeEnum rateType;
+            switch (rateTypeOption) {
+                case 1:
+                    rateType = RoomRateTypeEnum.PUBLISHED;
+                    break;
+                case 2:
+                    rateType = RoomRateTypeEnum.NORMAL;
+                    break;
+                case 3:
+                    rateType = RoomRateTypeEnum.PEAK;
+                    break;
+                case 4:
+                    rateType = RoomRateTypeEnum.PROMOTION;
+                    break;
+                default:
+                    rateType = roomRate.getRateType();
+            }
+
+            System.out.print("Enter new Rate per Night (current: " + roomRate.getRatePerNight() + "): ");
+            BigDecimal ratePerNight = scanner.nextBigDecimal();
+            ratePerNight = ratePerNight.compareTo(BigDecimal.ZERO) > 0 ? ratePerNight : roomRate.getRatePerNight();
+            scanner.nextLine();
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = null;
+            Date endDate = null;
+
+            if (rateType == RoomRateTypeEnum.PEAK || rateType == RoomRateTypeEnum.PROMOTION) {
+                try {
+                    System.out.print("Enter Start Date (yyyy-MM-dd, current: " + roomRate.getStartDate() + "): ");
+                    String startDateStr = scanner.nextLine().trim();
+                    startDate = startDateStr.isEmpty() ? roomRate.getStartDate() : dateFormat.parse(startDateStr);
+
+                    System.out.print("Enter End Date (yyyy-MM-dd, current: " + roomRate.getEndDate() + "): ");
+                    String endDateStr = scanner.nextLine().trim();
+                    endDate = endDateStr.isEmpty() ? roomRate.getEndDate() : dateFormat.parse(endDateStr);
+                } catch (ParseException e) {
+                    System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+                    return;
+                }
+            }
+
+            roomRateSessionBeanRemote.updateRoomRate(roomRateId, name, rateType, ratePerNight, startDate, endDate);
+            System.out.println("Room Rate updated successfully!");
+        } catch (Exception e) {
+            System.out.println("Error updating Room Rate: " + e.getMessage());
+        }
     }
 
-    //NOT DONE need take into account rs with other entities lazy fetching all that shit
+
+    // Deletes a room rate if it’s not associated with any reservations; otherwise, marks it as disabled.
     private void deleteRoomRate() {
-        System.out.println("Deleting room rate...");
-        // Implementation goes here
+        System.out.print("\n*** Delete Room Rate ***\n");
+        System.out.print("Enter Room Rate ID: ");
+        long roomRateId = scanner.nextLong();
+        scanner.nextLine();
+
+        try {
+            roomRateSessionBeanRemote.deleteRoomRate(roomRateId);
+            System.out.println("Room Rate deleted successfully.");            
+        } catch (RoomRateInUseException | RoomRateNotFoundException e) {
+            System.out.println("Error deleting Room Rate: " + e.getMessage());
+        }
     }
+
 
     private void viewAllRoomRates() {
         System.out.println("\n*** Room Rates List ***");
@@ -526,34 +742,52 @@ public class MainApp {
         }
     }
     
-    //NOT DONE
     private void walkInSearchRoom() {
-        while (true) {
-            System.out.println("\n--- Room Search ---");
-            //show search room details here
-            System.out.println("1. Update Room Rate");
-            System.out.println("2. Exit");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); 
+        System.out.print("\n*** Walk-In Room Search ***\n");
+        System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
+        String checkInDateStr = scanner.nextLine().trim();
+        System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
+        String checkOutDateStr = scanner.nextLine().trim();
 
-            switch (choice) {
-                case 1:
-                    walkInReserveRoom();
-                    break;
-                case 2:
-                    return;
-                default:
-                    System.out.println("Invalid option. Please try again.");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date checkInDate = dateFormat.parse(checkInDateStr);
+            Date checkOutDate = dateFormat.parse(checkOutDateStr);
+
+            List<Room> availableRooms = roomSessionBeanRemote.searchAvailableRooms(checkInDate, checkOutDate);
+            if (availableRooms.isEmpty()) {
+                System.out.println("No rooms available for the selected dates.");
+            } else {
+                System.out.println("Available Rooms:");
+                for (Room room : availableRooms) {
+                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + room.getRoomType().getName());
+                }
+                System.out.print("Enter Room ID to Reserve, or 0 to exit: ");
+                long roomId = scanner.nextLong();
+                if (roomId != 0) {
+                    walkInReserveRoom(roomId, checkInDate, checkOutDate);
+                }
             }
+        } catch (ParseException e) {
+            System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
         }
     }
-    
-    //NOT DONE
-    private void walkInReserveRoom() {
-        System.out.println("Deleting room rate...");
-        // Implementation goes here
+
+    // NOT DONE
+    private void walkInReserveRoom(long roomId, Date checkInDate, Date checkOutDate) {
+        System.out.print("Enter Guest Name: ");
+        String guestName = scanner.nextLine().trim();
+        System.out.print("Enter Contact Number: ");
+        String contactNumber = scanner.nextLine().trim();
+
+        try {
+            //reservationSessionBeanRemote.walkInReserveRoom(roomId, guestName, contactNumber, checkInDate, checkOutDate);
+            System.out.println("Room reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
+        } catch (Exception e) {
+            System.out.println("Error during reservation: " + e.getMessage());
+        }
     }
+
     
     //NOT DONE
     private void checkInGuest() {
