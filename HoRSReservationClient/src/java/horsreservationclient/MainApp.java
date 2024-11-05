@@ -65,10 +65,13 @@ public class MainApp {
             switch(response) {
                 case 1:
                     doLogin();
+                    break;
                 case 2:
                     doRegisterAsGuest();
+                    break;
                 case 3:
                     doSearchHotelRoomVisitor();
+                    break;
                 case 4:
                     System.out.println("Exiting HoRS Reservation Client...");
                     return;
@@ -114,10 +117,13 @@ public class MainApp {
             switch(response) {
                 case 1:
                     doSearchHotelRoomGuest();
+                    break;
                 case 2:
                     doViewReservationDetails();
+                    break;
                 case 3:
                     doViewAllReservations();
+                    break;
                 case 4:
                     doLogout();
                     return;
@@ -157,6 +163,7 @@ public class MainApp {
             switch(response){
                 case 1:
                     doReserveHotelRoom();
+                    break;
                 case 2:
                     return;
             }
