@@ -19,7 +19,7 @@ public interface GuestSessionBeanLocal {
 
     public Guest registerGuest(Guest guest);
 
-    public Guest loginGuest(String username) throws GuestNotFoundException;
+    public Guest loginGuest(String username, String password) throws GuestNotFoundException;
 
     public Guest viewGuestDetails(Long guestID);
 

@@ -7,11 +7,13 @@ package ejb.session.stateless;
 import entity.Room;
 import enumType.RoomAvailabilityEnum;
 import exceptions.RoomNotFoundException;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 /**
  *
@@ -28,6 +30,16 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
         em.persist(room);
         em.flush();
         return room;
+    }
+    
+    @Override
+    public List<Room> searchAvailableRooms(Date checkInDate, Date checkOutDate) {
+        Query query = em.createQuery("SELECT r FROM Room r WHERE r.roomID NOT IN " +
+                "(SELECT res.room.roomID FROM Reservation res WHERE " +
+                "(res.checkInDate <= :checkOutDate AND res.checkOutDate >= :checkInDate))");
+        query.setParameter("checkInDate", checkInDate);
+        query.setParameter("checkOutDate", checkOutDate);
+        return query.getResultList();
     }
     
     @Override

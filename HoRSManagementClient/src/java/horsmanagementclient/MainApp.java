@@ -90,7 +90,6 @@ public class MainApp {
     }
 
     private void doLogin() {
-        Scanner scanner = new Scanner(System.in);
         System.out.println("\n*** HoRS Management Client :: Login ***\n");
         System.out.print("Enter username> ");
         String username = scanner.nextLine().trim();

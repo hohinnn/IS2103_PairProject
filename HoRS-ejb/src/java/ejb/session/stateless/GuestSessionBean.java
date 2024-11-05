@@ -31,11 +31,13 @@ public class GuestSessionBean implements GuestSessionBeanRemote, GuestSessionBea
     }
     
     @Override
-    public Guest loginGuest(String username) throws GuestNotFoundException {
+    public Guest loginGuest(String username, String password) throws GuestNotFoundException {
         try {
-            return em.createQuery("SELECT g FROM Guest g WHERE g.username = :username", Guest.class)
-                     .setParameter("username", username)
-                     .getSingleResult();
+            Guest guest = em.createQuery("SELECT g FROM Guest g WHERE g.username = :username", Guest.class)
+                            .setParameter("username", username)
+                            .getSingleResult();
+            if (guest.getPassword().equals(password)) return guest;
+            else throw new GuestNotFoundException("Password incorrect!");
         } catch (NoResultException e) {
             throw new GuestNotFoundException("Guest with username: " + username + " not found.");
         }

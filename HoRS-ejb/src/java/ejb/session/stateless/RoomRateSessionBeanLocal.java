@@ -5,6 +5,7 @@
 package ejb.session.stateless;
 
 import entity.RoomRate;
+import entity.RoomType;
 import enumType.RoomRateTypeEnum;
 import exceptions.RoomRateNotFoundException;
 import java.math.BigDecimal;
@@ -28,5 +29,7 @@ public interface RoomRateSessionBeanLocal {
     public RoomRate getRoomRate(Long rateID) throws RoomRateNotFoundException;
 
     public List<RoomRate> getAllRoomRates();
+
+    public BigDecimal calculateRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate);
     
 }

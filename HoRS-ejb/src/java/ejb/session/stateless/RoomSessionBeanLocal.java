@@ -7,6 +7,7 @@ package ejb.session.stateless;
 import entity.Room;
 import enumType.RoomAvailabilityEnum;
 import exceptions.RoomNotFoundException;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -24,5 +25,7 @@ public interface RoomSessionBeanLocal {
     public void deleteRoom(String formattedRoomSequence) throws RoomNotFoundException;
 
     public List<Room> getAllRooms();
+
+    public List<Room> searchAvailableRooms(Date checkInDate, Date checkOutDate);
     
 }
