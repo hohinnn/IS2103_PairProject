@@ -19,7 +19,7 @@ public class Employee implements Serializable{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long employeeID;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 32, nullable = false, unique = true)
     private String username;
 
     @Column(nullable = false)

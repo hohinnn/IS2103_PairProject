@@ -18,19 +18,19 @@ public class Guest implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long guestID;
     
-    @Column(nullable = false)
+    @Column(length = 32, nullable = false)
     private String name;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 8, nullable = false, unique = true)
     private String phoneNumber;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 9, nullable = false, unique = true)
     private String passportNumber;
     
-    @Column(nullable = false, unique = true)
+    @Column(length = 32,nullable = false, unique = true)
     private String username;
     
     @Column(nullable = false, unique = true)

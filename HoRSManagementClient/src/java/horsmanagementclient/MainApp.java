@@ -4,6 +4,7 @@
  */
 package horsmanagementclient;
 
+import ejb.session.singleton.RoomAllocationSessionBeanRemote;
 import ejb.session.stateless.EmployeeSessionBeanRemote;
 import ejb.session.stateless.GuestSessionBeanRemote;
 import ejb.session.stateless.PartnerSessionBeanRemote;
@@ -14,6 +15,7 @@ import ejb.session.stateless.RoomTypeSessionBeanRemote;
 import entity.Employee;
 import entity.Partner;
 import entity.Room;
+import entity.RoomAllocation;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
@@ -26,6 +28,8 @@ import exceptions.RoomTypeNotFoundException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
@@ -44,13 +48,16 @@ public class MainApp {
     private RoomRateSessionBeanRemote roomRateSessionBeanRemote;
     private RoomSessionBeanRemote roomSessionBeanRemote;
     private RoomTypeSessionBeanRemote roomTypeSessionBeanRemote;
+    private RoomAllocationSessionBeanRemote roomAllocationSessionBeanRemote;
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
     
     private Employee currentEmployee = null;
     private Scanner scanner;
 
     public MainApp() {}
 
-    public MainApp(EmployeeSessionBeanRemote employeeSessionBeanRemote, GuestSessionBeanRemote guestSessionBeanRemote, PartnerSessionBeanRemote partnerSessionBeanRemote, ReservationSessionBeanRemote reservationSessionBeanRemote, RoomRateSessionBeanRemote roomRateSessionBeanRemote, RoomSessionBeanRemote roomSessionBeanRemote, RoomTypeSessionBeanRemote roomTypeSessionBeanRemote) {
+    public MainApp(EmployeeSessionBeanRemote employeeSessionBeanRemote, GuestSessionBeanRemote guestSessionBeanRemote, PartnerSessionBeanRemote partnerSessionBeanRemote, ReservationSessionBeanRemote reservationSessionBeanRemote, RoomRateSessionBeanRemote roomRateSessionBeanRemote, RoomSessionBeanRemote roomSessionBeanRemote, RoomTypeSessionBeanRemote roomTypeSessionBeanRemote, RoomAllocationSessionBeanRemote roomAllocationSessionBeanRemote) {
         this.employeeSessionBeanRemote = employeeSessionBeanRemote;
         this.guestSessionBeanRemote = guestSessionBeanRemote;
         this.partnerSessionBeanRemote = partnerSessionBeanRemote;
@@ -58,6 +65,7 @@ public class MainApp {
         this.roomRateSessionBeanRemote = roomRateSessionBeanRemote;
         this.roomSessionBeanRemote = roomSessionBeanRemote;
         this.roomTypeSessionBeanRemote = roomTypeSessionBeanRemote;
+        this.roomAllocationSessionBeanRemote = roomAllocationSessionBeanRemote;
         this.scanner = new Scanner(System.in);
     }
     
@@ -161,6 +169,7 @@ public class MainApp {
         System.out.println("5: Create New Room");
         System.out.println("6: View All Rooms");
         System.out.println("7: View Room Allocation Exception Report");
+        System.out.println("8: Trigger Allocation (for Testing)");
     }
     
     private void displayMenuOptionsSalesManager() {
@@ -216,6 +225,9 @@ public class MainApp {
                 break;
             case 7:
                 viewRoomAllocationExceptionReport();
+                break;
+            case 8:
+                allocateRoomsForDate();
                 break;
             default:
                 System.out.println("Invalid option, please try again.");
@@ -550,8 +562,39 @@ public class MainApp {
 
     //NOT DONE
     private void viewRoomAllocationExceptionReport() {
-        System.out.println("Viewing room allocation exception report...");
-        // Implementation goes here
+        System.out.println("\n--- Room Allocation Exception Report ---");
+
+        // Retrieve all room allocation exceptions
+        List<RoomAllocation> exceptions = roomAllocationSessionBeanRemote.retrieveRoomAllocationExceptions();
+
+        if (exceptions.isEmpty()) {
+            System.out.println("No room allocation exceptions found.");
+            return;
+        }
+        
+        int type1Count = 0;
+        int type2Count = 0;
+
+        // Display exceptions by type
+        for (RoomAllocation exception : exceptions) {
+            String message = exception.getAllocationExceptionReport();
+            System.out.println("Reservation ID: " + exception.getReservation().getReservationID());
+            System.out.println("Exception Date: " + exception.getAllocationDate());
+
+            if (message.contains("Type 1")) {
+                System.out.println("Type 1 Exception: " + message);
+                type1Count++;
+            } else if (message.contains("Type 2")) {
+                System.out.println("Type 2 Exception: " + message);
+                type2Count++;
+            }
+
+            System.out.println("-------------------------------------------------");
+        }
+        
+        System.out.println("Summary:");
+        System.out.println("Total Type 1 Exceptions (upgraded room allocated): " + type1Count);
+        System.out.println("Total Type 2 Exceptions (no room available): " + type2Count);
     }
 
     private void createNewRoomRate() {
@@ -691,7 +734,6 @@ public class MainApp {
             ratePerNight = ratePerNight.compareTo(BigDecimal.ZERO) > 0 ? ratePerNight : roomRate.getRatePerNight();
             scanner.nextLine();
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date startDate = null;
             Date endDate = null;
 
@@ -732,7 +774,20 @@ public class MainApp {
             System.out.println("Error deleting Room Rate: " + e.getMessage());
         }
     }
+    
+    public void allocateRoomsForDate() {
+    System.out.println("Enter check-in date (yyyy-MM-dd) for room allocation or press Enter for today's date:");
+    String input = scanner.nextLine();
+    Date date;
 
+    try {
+        date = input.isEmpty() ? new Date() : dateFormat.parse(input);
+        roomAllocationSessionBeanRemote.allocateRoomsForDate(date);
+        System.out.println("Room allocation completed for " + dateFormat.format(date));
+    } catch (ParseException e) {
+        System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+    }
+}
 
     private void viewAllRoomRates() {
         System.out.println("\n*** Room Rates List ***");

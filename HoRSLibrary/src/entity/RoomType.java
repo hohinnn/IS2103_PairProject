@@ -25,6 +25,9 @@ public class RoomType implements Serializable {
     
     @Enumerated(EnumType.STRING)
     private RoomTypeEnum name;
+    
+    @Column
+    private int priorityRanking;
 
     @Column
     private String description;
@@ -59,6 +62,11 @@ public class RoomType implements Serializable {
         this.amenities = amenities;
         this.rooms = new ArrayList<Room>();
         this.roomRates = new ArrayList<RoomRate>();
+        if (name == RoomTypeEnum.DELUXE) this.priorityRanking = 1;
+        else if (name == RoomTypeEnum.PREMIER) this.priorityRanking = 2;
+        else if (name == RoomTypeEnum.FAMILY) this.priorityRanking = 3;
+        else if (name == RoomTypeEnum.JUNIOR_SUITE) this.priorityRanking = 4;
+        else if (name == RoomTypeEnum.GRAND_SUITE) this.priorityRanking = 5;
     }
 
     public Long getRoomTypeID() {
@@ -75,6 +83,14 @@ public class RoomType implements Serializable {
 
     public void setName(RoomTypeEnum name) {
         this.name = name;
+    }
+
+    public int getPriorityRanking() {
+        return priorityRanking;
+    }
+
+    public void setPriorityRanking(int priorityRanking) {
+        this.priorityRanking = priorityRanking;
     }
 
     public String getDescription() {

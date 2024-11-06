@@ -19,10 +19,10 @@ public class Partner implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long partnerID;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 32, nullable = false, unique = true)
     private String partnerName;
 
-    @Column(nullable = false, unique = true)
+    @Column(length = 32, nullable = false, unique = true)
     private String username;
 
     @Column(nullable = false)
