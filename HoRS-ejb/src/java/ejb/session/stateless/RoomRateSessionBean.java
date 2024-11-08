@@ -38,17 +38,17 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     
     @Override
     public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException {
-        try {
-            RoomRate roomRate = em.find(RoomRate.class, rateID);
-            roomRate.setName(name);
-            roomRate.setRateType(rateType);
-            roomRate.setRatePerNight(ratePerNight);
-            roomRate.setStartDate(startDate);
-            roomRate.setEndDate(endDate);
-            em.merge(roomRate);
-        } catch (NoResultException e) {
-            throw new RoomRateNotFoundException("Room Rate: " + rateID + " not found.");
+        RoomRate roomRate = em.find(RoomRate.class, rateID);
+        if (roomRate == null) {
+            throw new RoomRateNotFoundException("Room Rate ID " + rateID + " not found.");
         }
+        
+        roomRate.setName(name);
+        roomRate.setRateType(rateType);
+        roomRate.setRatePerNight(ratePerNight);
+        roomRate.setStartDate(startDate);
+        roomRate.setEndDate(endDate);
+        em.merge(roomRate);
     }
     
     @Override
@@ -105,6 +105,21 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
         RoomRate bestRate = rates.get(0);
         long days = ChronoUnit.DAYS.between(checkInDate.toInstant(), checkOutDate.toInstant());
         return bestRate.getRatePerNight().multiply(BigDecimal.valueOf(days));
+    }
+    
+    // for walk-in search room use case
+    @Override
+    public RoomRate getPublishedRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate) {
+        Query query = em.createQuery("SELECT rr FROM RoomRate rr WHERE rr.roomType = :roomType AND rr.rateType = :rateType " +
+                "AND (rr.startDate IS NULL OR rr.startDate <= :checkInDate) AND " +
+                "(rr.endDate IS NULL OR rr.endDate >= :checkOutDate) ORDER BY rr.ratePerNight ASC");
+        query.setParameter("roomType", roomType);
+        query.setParameter("rateType", RoomRateTypeEnum.PUBLISHED);
+        query.setParameter("checkInDate", checkInDate);
+        query.setParameter("checkOutDate", checkOutDate);
+
+        List<RoomRate> rates = query.getResultList();
+        return rates.isEmpty() ? null : rates.get(0);
     }
     
 }

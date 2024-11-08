@@ -19,6 +19,8 @@ import javax.ejb.Remote;
 public interface RoomSessionBeanRemote {
     
     public Room createRoom(Room room);
+    
+    public Room getRoomById(Long roomId) throws RoomNotFoundException;
 
     public void updateRoomStatus(String formattedRoomSequence, RoomAvailabilityEnum newStatus) throws RoomNotFoundException;
 

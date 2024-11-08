@@ -43,6 +43,15 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
     }
     
     @Override
+    public Room getRoomById(Long roomId) throws RoomNotFoundException {
+        Room room = em.find(Room.class, roomId);
+        if (room == null) {
+            throw new RoomNotFoundException("Room ID " + roomId + " not found.");
+        }
+        return room;
+    }
+    
+    @Override
     public void updateRoomStatus(String formattedRoomSequence, RoomAvailabilityEnum newStatus) throws RoomNotFoundException {
         try {
             Room room = em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)

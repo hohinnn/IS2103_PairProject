@@ -14,6 +14,7 @@ import java.util.Date;
  *
  * @author hohin
  */
+@Entity
 public class RoomRate implements Serializable {
     
     @Id

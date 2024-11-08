@@ -19,6 +19,8 @@ import javax.ejb.Local;
 public interface RoomSessionBeanLocal {
 
     public Room createRoom(Room room);
+    
+    public Room getRoomById(Long roomId) throws RoomNotFoundException;
 
     public void updateRoomStatus(String formattedRoomSequence, RoomAvailabilityEnum newStatus) throws RoomNotFoundException;
 
@@ -27,5 +29,6 @@ public interface RoomSessionBeanLocal {
     public List<Room> getAllRooms();
 
     public List<Room> searchAvailableRooms(Date checkInDate, Date checkOutDate);
+
     
 }

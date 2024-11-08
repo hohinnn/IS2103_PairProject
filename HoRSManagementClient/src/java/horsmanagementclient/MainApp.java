@@ -14,6 +14,7 @@ import ejb.session.stateless.RoomSessionBeanRemote;
 import ejb.session.stateless.RoomTypeSessionBeanRemote;
 import entity.Employee;
 import entity.Partner;
+import entity.Reservation;
 import entity.Room;
 import entity.RoomAllocation;
 import entity.RoomRate;
@@ -22,6 +23,8 @@ import enumType.EmployeeAccessRightEnum;
 import enumType.RoomRateTypeEnum;
 import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
+import exceptions.ReservationNotFoundException;
+import exceptions.RoomNotFoundException;
 import exceptions.RoomRateInUseException;
 import exceptions.RoomRateNotFoundException;
 import exceptions.RoomTypeNotFoundException;
@@ -30,9 +33,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -810,50 +816,98 @@ public class MainApp {
             Date checkOutDate = dateFormat.parse(checkOutDateStr);
 
             List<Room> availableRooms = roomSessionBeanRemote.searchAvailableRooms(checkInDate, checkOutDate);
+        
             if (availableRooms.isEmpty()) {
                 System.out.println("No rooms available for the selected dates.");
-            } else {
-                System.out.println("Available Rooms:");
-                for (Room room : availableRooms) {
-                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + room.getRoomType().getName());
-                }
-                System.out.print("Enter Room ID to Reserve, or 0 to exit: ");
-                long roomId = scanner.nextLong();
-                if (roomId != 0) {
-                    walkInReserveRoom(roomId, checkInDate, checkOutDate);
+                return;
+            }
+
+            // Display available rooms and calculate the reservation amount
+            System.out.println("Available Rooms:");
+            for (Room room : availableRooms) {
+                RoomType roomType = room.getRoomType();
+                RoomRate publishedRate = roomRateSessionBeanRemote.getPublishedRateForRoomType(roomType, checkInDate, checkOutDate);
+
+                if (publishedRate != null) {
+                    long nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+                    BigDecimal reservationAmount = publishedRate.getRatePerNight().multiply(BigDecimal.valueOf(nights));
+                
+                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + roomType.getName() +
+                                   ", Rate per Night: " + publishedRate.getRatePerNight() +
+                                   ", Total for Stay: " + reservationAmount);
+                } else {
+                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + roomType.getName() + " - No published rate available.");
                 }
             }
+
+            // Prompt to reserve rooms
+            System.out.print("Enter Room IDs to Reserve (comma-separated, e.g., 101,102): ");
+            String roomIdStr = scanner.nextLine().trim();
+            List<Long> selectedRoomIds = Arrays.stream(roomIdStr.split(","))
+                                               .map(Long::parseLong)
+                                               .collect(Collectors.toList());
+
+            walkInReserveRoom(selectedRoomIds, checkInDate, checkOutDate);
         } catch (ParseException e) {
             System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
         }
     }
 
-    // NOT DONE
-    private void walkInReserveRoom(long roomId, Date checkInDate, Date checkOutDate) {
+
+    //Reserve room(s) shown in search
+    private void walkInReserveRoom(List<Long> roomIds, Date checkInDate, Date checkOutDate) {
         System.out.print("Enter Guest Name: ");
         String guestName = scanner.nextLine().trim();
         System.out.print("Enter Contact Number: ");
         String contactNumber = scanner.nextLine().trim();
 
+    try {
+        List<Room> rooms = new ArrayList<>();
+        for (Long roomId : roomIds) {
+            rooms.add(roomSessionBeanRemote.getRoomById(roomId));  
+        }
+
+        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, checkInDate, checkOutDate, rooms);
+        
+        System.out.println("Rooms reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
+        for (Reservation reservation : reservations) {
+            System.out.println("Reservation ID: " + reservation.getReservationID() + ", Room: " + reservation.getRoom().getFormattedRoomSequence() + ", Status: " + reservation.getStatus());
+        }
+    } catch (RoomNotFoundException e) {
+        System.out.println("Error during reservation: " + e.getMessage());
+    }
+}
+
+    private void checkInGuest() {
+        System.out.print("\n*** Check-In Guest ***\n");
+        System.out.print("Enter Reservation ID to Check-In: ");
+        long reservationId = scanner.nextLong();
+        scanner.nextLine(); // Consume newline
+
         try {
-            //reservationSessionBeanRemote.walkInReserveRoom(roomId, guestName, contactNumber, checkInDate, checkOutDate);
-            System.out.println("Room reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
-        } catch (Exception e) {
-            System.out.println("Error during reservation: " + e.getMessage());
+            reservationSessionBeanRemote.checkInGuest(reservationId);
+            System.out.println("Guest checked in successfully for reservation ID: " + reservationId);
+        } catch (ReservationNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.out.println("Cannot check-in: " + e.getMessage());
         }
     }
 
     
-    //NOT DONE
-    private void checkInGuest() {
-        System.out.println("Check in guest");
-        // Implementation goes here
-    }
-    
-    //NOT DONE
     private void checkOutGuest() {
-        System.out.println("Check out guest");
-        // Implementation goes here
+        System.out.print("\n*** Check-Out Guest ***\n");
+        System.out.print("Enter Reservation ID to Check-Out: ");
+        long reservationId = scanner.nextLong();
+        scanner.nextLine(); // Consume newline
+
+        try {
+            reservationSessionBeanRemote.checkOutGuest(reservationId);
+            System.out.println("Guest checked out successfully for reservation ID: " + reservationId);
+        } catch (ReservationNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.out.println("Cannot check-out: " + e.getMessage());
+        }
     }
-    
 }
