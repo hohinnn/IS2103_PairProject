@@ -6,6 +6,7 @@ package ejb.session.singleton;
 
 import entity.Reservation;
 import entity.RoomAllocation;
+import entity.RoomType;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
@@ -26,5 +27,7 @@ public interface RoomAllocationSessionBeanLocal {
     public void allocateRoomsForDate(Date date);
 
     public List<RoomAllocation> retrieveRoomAllocationExceptions();
+
+    public boolean checkRoomTypeAvailability(RoomType roomType, Date checkInDate, Date checkOutDate);
     
 }

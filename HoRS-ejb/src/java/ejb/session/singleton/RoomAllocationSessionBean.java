@@ -7,10 +7,13 @@ package ejb.session.singleton;
 import entity.Reservation;
 import entity.Room;
 import entity.RoomAllocation;
+import entity.RoomRate;
 import entity.RoomType;
 import enumType.RoomAvailabilityEnum;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
@@ -57,45 +60,65 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
     @Override
     public void allocateRoomForReservation(Reservation reservation) {
-        Room allocatedRoom = findAvailableRoomOrUpgrade(reservation.getRoomType());
+        Room allocatedRoom = findAvailableRoomOrUpgrade(
+                reservation.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate());
 
         if (allocatedRoom != null) {
+            // Assign the room to the reservation
             reservation.setRoom(allocatedRoom);
-            allocatedRoom.setStatus(RoomAvailabilityEnum.OCCUPIED); // Mark room as unavailable
-            em.merge(reservation);
+            allocatedRoom.setStatus(RoomAvailabilityEnum.OCCUPIED);
             em.merge(allocatedRoom);
 
+            // Calculate the total amount based on the prevailing rates for each night of stay
+            BigDecimal totalAmount = calculateTotalAmount(reservation);
+            reservation.setTotalAmount(totalAmount);
+            em.merge(reservation);
+
             if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
-                logRoomAllocationException(reservation, "Type 1: Room upgrade allocated to next higher tier.");
+                logRoomAllocationException(reservation, "Room upgraded to next higher tier.");
             }
         } else {
-            logRoomAllocationException(reservation, "Type 2: No rooms available, manual handling required.");
+            logRoomAllocationException(reservation, "No rooms available, manual handling required.");
         }
     }
 
     // Finds an available room in the requested room type or next higher tier
-    private Room findAvailableRoomOrUpgrade(RoomType requestedRoomType) {
+    private Room findAvailableRoomOrUpgrade(RoomType requestedRoomType, Date checkInDate, Date checkOutDate) {
         RoomType currentRoomType = requestedRoomType;
 
         while (currentRoomType != null) {
-            Room availableRoom = findAvailableRoom(currentRoomType);
+            Room availableRoom = findAvailableRoom(currentRoomType, checkInDate, checkOutDate);
             if (availableRoom != null) {
                 return availableRoom;
             }
-            currentRoomType = getNextHigherRoomType(currentRoomType); // Upgrade to higher room type if needed
+            currentRoomType = getNextHigherRoomType(currentRoomType); // Try upgrading to a higher room type if needed
         }
 
         return null; // No rooms available even after attempting upgrades
     }
 
     // Helper method to find an available room of a specific type
-    private Room findAvailableRoom(RoomType roomType) {
+    private Room findAvailableRoom(RoomType roomType, Date checkInDate, Date checkOutDate) {
         List<Room> rooms = em.createQuery(
                 "SELECT r FROM Room r WHERE r.roomType = :roomType AND r.status = :status", Room.class)
                 .setParameter("roomType", roomType)
                 .setParameter("status", RoomAvailabilityEnum.AVAILABLE)
                 .getResultList();
-        return rooms.isEmpty() ? null : rooms.get(0);
+
+        for (Room room : rooms) {
+            List<Reservation> overlappingReservations = em.createQuery(
+                    "SELECT res FROM Reservation res WHERE res.room = :room AND "
+                    + "(res.checkInDate < :checkOutDate AND res.checkOutDate > :checkInDate)", Reservation.class)
+                    .setParameter("room", room)
+                    .setParameter("checkInDate", checkInDate)
+                    .setParameter("checkOutDate", checkOutDate)
+                    .getResultList();
+
+            if (overlappingReservations.isEmpty()) {
+                return room; // Room is available for the entire duration
+            }
+        }
+        return null; // No available rooms found for the specified period
     }
 
     // Retrieve the next higher room type if available
@@ -116,12 +139,94 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
         LOGGER.log(Level.WARNING, "Room Allocation Exception: {0} for Reservation ID: {1}", new Object[]{message, reservation.getReservationID()});
     }
-    
+
     @Override
     public List<RoomAllocation> retrieveRoomAllocationExceptions() {
         TypedQuery<RoomAllocation> query = em.createQuery(
-                "SELECT ra FROM RoomAllocation ra WHERE ra.allocationExceptionReport IS NOT NULL", 
+                "SELECT ra FROM RoomAllocation ra WHERE ra.allocationExceptionReport IS NOT NULL",
                 RoomAllocation.class);
         return query.getResultList();
-    }   
+    }
+
+    @Override
+    public boolean checkRoomTypeAvailability(RoomType roomType, Date checkInDate, Date checkOutDate) {
+        List<Room> rooms = em.createQuery(
+                "SELECT r FROM Room r WHERE r.roomType = :roomType AND r.status = :status", Room.class)
+                .setParameter("roomType", roomType)
+                .setParameter("status", RoomAvailabilityEnum.AVAILABLE)
+                .getResultList();
+
+        for (Room room : rooms) {
+            List<Reservation> overlappingReservations = em.createQuery(
+                    "SELECT res FROM Reservation res WHERE res.room = :room AND "
+                    + "(res.checkInDate < :checkOutDate AND res.checkOutDate > :checkInDate)", Reservation.class)
+                    .setParameter("room", room)
+                    .setParameter("checkInDate", checkInDate)
+                    .setParameter("checkOutDate", checkOutDate)
+                    .getResultList();
+
+            if (overlappingReservations.isEmpty()) {
+                return true; // Room type is available
+            }
+        }
+        return false;
+    }
+
+    private long daysBetween(Date start, Date end) {
+        return ChronoUnit.DAYS.between(start.toInstant(), end.toInstant());
+    }
+
+    private BigDecimal calculateTotalAmount(Reservation reservation) {
+        RoomType roomType = reservation.getRoomType();
+        Date checkInDate = reservation.getCheckInDate();
+        Date checkOutDate = reservation.getCheckOutDate();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Loop through each day of the reservation
+        Date currentDate = checkInDate;
+        while (currentDate.before(checkOutDate)) {
+            BigDecimal ratePerNight = getRateForDate(roomType, currentDate);
+            totalAmount = totalAmount.add(ratePerNight);
+            currentDate = addDays(currentDate, 1); // Move to the next day
+        }
+
+        return totalAmount;
+    }
+
+    private BigDecimal getRateForDate(RoomType roomType, Date date) {
+        // Check for Promotion Rate first
+        RoomRate promotionRate = findRoomRate(roomType, "PROMOTION", date);
+        if (promotionRate != null) {
+            return promotionRate.getRatePerNight();
+        }
+
+        // Check for Peak Rate if no Promotion Rate is found
+        RoomRate peakRate = findRoomRate(roomType, "PEAK", date);
+        if (peakRate != null) {
+            return peakRate.getRatePerNight();
+        }
+
+        // Use Normal Rate as the default rate
+        RoomRate normalRate = findRoomRate(roomType, "NORMAL", date);
+        return (normalRate != null) ? normalRate.getRatePerNight() : BigDecimal.ZERO;
+    }
+
+    private RoomRate findRoomRate(RoomType roomType, String rateType, Date date) {
+        TypedQuery<RoomRate> query = em.createQuery(
+                "SELECT rr FROM RoomRate rr WHERE rr.roomType = :roomType AND rr.rateType = :rateType "
+                + "AND (rr.startDate IS NULL OR rr.startDate <= :date) "
+                + "AND (rr.endDate IS NULL OR rr.endDate >= :date)", RoomRate.class);
+        query.setParameter("roomType", roomType);
+        query.setParameter("rateType", rateType);
+        query.setParameter("date", date);
+        List<RoomRate> rates = query.getResultList();
+        return rates.isEmpty() ? null : rates.get(0);
+    }
+
+    private Date addDays(Date date, int days) {
+        long milliseconds = date.getTime();
+        long oneDayMilliseconds = days * 24L * 60L * 60L * 1000L;
+        return new Date(milliseconds + oneDayMilliseconds);
+    }
+
 }

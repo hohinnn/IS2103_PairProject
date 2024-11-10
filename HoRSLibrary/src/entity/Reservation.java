@@ -4,6 +4,7 @@
  */
 package entity;
 
+import enumType.ReservationStatusEnum;
 import java.io.Serializable;
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -28,7 +29,8 @@ public class Reservation implements Serializable {
     private Date checkOutDate;
 
     @Column(nullable = false)
-    private String status; // Confirmed, Checked-In, Completed
+    @Enumerated(EnumType.STRING)
+    private ReservationStatusEnum status; // Confirmed, Checked-In, Completed
 
     @Column(nullable = false)
     private BigDecimal totalAmount;
@@ -52,8 +54,16 @@ public class Reservation implements Serializable {
 
     public Reservation(){}
     
-    public Reservation(Date checkInDate, Date checkOutDate, String status, BigDecimal totalAmount, Guest guest, RoomType roomType, Room room, Partner partner) {
+    public Reservation(Date checkInDate, Date checkOutDate, ReservationStatusEnum status, Guest guest, RoomType roomType) {
         this();
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.status = status;
+        this.guest = guest;
+        this.roomType = roomType;
+    }
+
+    public Reservation(Date checkInDate, Date checkOutDate, ReservationStatusEnum status, BigDecimal totalAmount, Guest guest, RoomType roomType, Room room, Partner partner) {
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.status = status;
@@ -63,6 +73,8 @@ public class Reservation implements Serializable {
         this.room = room;
         this.partner = partner;
     }
+    
+    
 
     public Long getReservationID() {
         return reservationID;
@@ -88,11 +100,11 @@ public class Reservation implements Serializable {
         this.checkOutDate = checkOutDate;
     }
 
-    public String getStatus() {
+    public ReservationStatusEnum getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ReservationStatusEnum status) {
         this.status = status;
     }
 

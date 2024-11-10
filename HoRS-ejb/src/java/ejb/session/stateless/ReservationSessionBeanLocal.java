@@ -18,7 +18,7 @@ import javax.ejb.Local;
 @Local
 public interface ReservationSessionBeanLocal {
 
-    public Reservation createReservation(Reservation reservation);
+    public Long createReservation(Reservation reservation);
 
     public List<Reservation> viewAllReservations(long guestID);
 
@@ -29,5 +29,7 @@ public interface ReservationSessionBeanLocal {
     public void checkInGuest(long reservationId) throws ReservationNotFoundException;
 
     public void checkOutGuest(long reservationId) throws ReservationNotFoundException;
+
+    public Long createReservation(Long guestId, Long roomId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
     
 }

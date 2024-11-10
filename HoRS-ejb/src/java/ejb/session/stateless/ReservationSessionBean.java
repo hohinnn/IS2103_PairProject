@@ -4,12 +4,17 @@
  */
 package ejb.session.stateless;
 
+import ejb.session.singleton.RoomAllocationSessionBeanLocal;
 import entity.Guest;
 import entity.Reservation;
 import entity.Room;
 import entity.RoomType;
+import enumType.ReservationStatusEnum;
+import enumType.RoomAvailabilityEnum;
 import exceptions.ReservationNotFoundException;
 import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,36 +33,38 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
     @PersistenceContext(unitName = "HoRS-ejbPU")
     private EntityManager em;
-    
+
     @EJB
-    private RoomRateSessionBeanRemote roomRateSessionBean;
+    private RoomRateSessionBeanLocal roomRateSessionBeanLocal;
+    @EJB
+    private RoomAllocationSessionBeanLocal roomAllocationSessionBeanLocal;
 
     @Override
-    public Reservation createReservation(Reservation reservation) {
+    public Long createReservation(Reservation reservation) {
         em.persist(reservation);
         em.flush();
-        return reservation;
+        return reservation.getReservationID();
     }
-    
+
     @Override
     public List<Reservation> viewAllReservations(long guestID) {
         Guest guest = em.createQuery("SELECT g from GUEST g WHERE g.guestID = :guestID", Guest.class)
-                        .setParameter("guestID", guestID)
-                        .getSingleResult();
+                .setParameter("guestID", guestID)
+                .getSingleResult();
         return guest.getReservations();
     }
-    
+
     @Override
-    public Reservation viewReservation(long reservationID) throws ReservationNotFoundException{
+    public Reservation viewReservation(long reservationID) throws ReservationNotFoundException {
         try {
             return em.createQuery("SELECT r from Reservation r WHERE r.reservationID = :reservationID", Reservation.class)
-                        .setParameter("reservationID", reservationID)
-                        .getSingleResult();
+                    .setParameter("reservationID", reservationID)
+                    .getSingleResult();
         } catch (NoResultException e) {
             throw new ReservationNotFoundException("Reservation " + reservationID + " not found!");
         }
     }
-    
+
     @Override
     public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
         Guest guest = new Guest();
@@ -67,14 +74,14 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         Date currentDate = new Date();
         // Immediate check-in after 2am
-        boolean immediateCheckIn = checkInDate.equals(currentDate) && currentDate.getHours() >= 2;
+        boolean immediateCheckIn = checkInDate.equals(currentDate) && currentDate.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
 
         List<Reservation> reservations = new ArrayList<>();
         for (Room room : rooms) {
             RoomType roomType = room.getRoomType();
-            BigDecimal totalAmount = roomRateSessionBean.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
+            BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
 
-            Reservation reservation = new Reservation(checkInDate, checkOutDate, immediateCheckIn ? "Checked-In" : "Reserved", totalAmount, guest, roomType, room, null);
+            Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, guest, roomType, room, null);
             em.persist(reservation);
             reservations.add(reservation);
         }
@@ -82,8 +89,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         em.flush();
         return reservations;
     }
-    
-    
+
     //Marks the reservation as "Checked-In" if it is currently in "Reserved" status. 
     @Override
     public void checkInGuest(long reservationId) throws ReservationNotFoundException {
@@ -92,11 +98,11 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             throw new ReservationNotFoundException("Reservation ID " + reservationId + " not found.");
         }
 
-        if (!reservation.getStatus().equals("Reserved")) {
+        if (!reservation.getStatus().equals(ReservationStatusEnum.RESERVED)) {
             throw new IllegalStateException("Reservation is not in a state that allows check-in.");
         }
 
-        reservation.setStatus("Checked-In");
+        reservation.setStatus(ReservationStatusEnum.CHECKED_IN);
         em.merge(reservation);
     }
 
@@ -108,11 +114,37 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             throw new ReservationNotFoundException("Reservation ID " + reservationId + " not found.");
         }
 
-        if (!reservation.getStatus().equals("Checked-In")) {
+        if (!reservation.getStatus().equals(ReservationStatusEnum.CHECKED_IN)) {
             throw new IllegalStateException("Guest is not currently checked-in.");
         }
 
-        reservation.setStatus("Completed");
+        reservation.setStatus(ReservationStatusEnum.COMPLETED);
         em.merge(reservation);
+    }
+
+    public Long createReservation(Long guestId, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception {
+        Guest guest = em.find(Guest.class, guestId);
+        RoomType roomType = em.find(RoomType.class, roomTypeId);
+
+        if (guest == null || roomType == null) {
+            throw new Exception("Guest or Room Type not found.");
+        }
+
+        // Check if there are enough rooms of the requested type available
+        boolean isAvailable = roomAllocationSessionBeanLocal.checkRoomTypeAvailability(roomType, checkInDate, checkOutDate);
+        if (!isAvailable) {
+            throw new Exception("No rooms available for the entire duration of the stay.");
+        }
+
+        // Create and persist the reservation without calculating the total amount
+        Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, guest, roomType);
+        Long reservationID = createReservation(reservation);
+
+        // For same-day check-ins after 2 am, allocate a specific room immediately
+        if (isImmediateCheckIn) {
+            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservation);
+        }
+
+        return reservationID;
     }
 }
