@@ -90,6 +90,7 @@ public class MainApp {
                 System.out.print("> ");
 
                 response = scanner.nextInt();
+                scanner.nextLine(); 
 
                 if(response == 1)
                 {
@@ -147,6 +148,7 @@ public class MainApp {
             }
             System.out.print("Choose an option: ");
             response = scanner.nextInt();
+            scanner.nextLine();
 
             if (response == 1) {
                 doLogout();
@@ -277,15 +279,18 @@ public class MainApp {
 
         System.out.print("Enter password: ");
         String password = scanner.nextLine().trim();
-
+        
         // Choose access right based on user input
-        System.out.println("Select Employee Access Right:");
+        System.out.println();
+        System.out.println("***Select Employee Access Right:***");
         System.out.println("1. System Administrator");
         System.out.println("2. Operation Manager");
         System.out.println("3. Sales Manager");
         System.out.println("4. Guest Relation Officer");
         System.out.println("5. Back");
+        System.out.print(">");
         int accessRightChoice = scanner.nextInt();
+        scanner.nextLine();
 
         try {
             EmployeeAccessRightEnum accessRight = null;
@@ -346,6 +351,7 @@ public class MainApp {
         List<Partner> partners = partnerSessionBeanRemote.viewAllPartners();
         for (Partner p : partners) {
             System.out.println(p.getPartnerName());
+            System.out.println("ID: "+ p.getPartnerID()+ " | Partner Name: " + p.getPartnerName() + "| Username: " + p.getUsername());
         }
     }
 

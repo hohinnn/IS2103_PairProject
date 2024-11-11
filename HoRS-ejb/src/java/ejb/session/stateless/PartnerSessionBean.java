@@ -29,7 +29,7 @@ public class PartnerSessionBean implements PartnerSessionBeanRemote, PartnerSess
     
     @Override
     public List<Partner> viewAllPartners() {
-        return em.createQuery("SELECT p FROM Partner p")
+        return em.createQuery("SELECT p FROM Partner p", Partner.class)
                 .getResultList();
     }
 }
