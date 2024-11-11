@@ -48,8 +48,16 @@ public class Reservation implements Serializable {
     private Room room; // The specific room assigned to this reservation
     
     @ManyToOne
-    @JoinColumn(name = "partner_id") // adjust if your column is named differently
+    @JoinColumn(nullable = true) // adjust if your column is named differently
     private Partner partner;
+
+    public Partner getPartner() {
+        return partner;
+    }
+
+    public void setPartner(Partner partner) {
+        this.partner = partner;
+    }
 
 
     public Reservation(){}
@@ -61,6 +69,15 @@ public class Reservation implements Serializable {
         this.status = status;
         this.guest = guest;
         this.roomType = roomType;
+    }
+    
+    public Reservation(Date checkInDate, Date checkOutDate, ReservationStatusEnum status, RoomType roomType, Partner partner) {
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.status = status;
+        this.guest = null;
+        this.roomType = roomType;
+        this.partner = partner;
     }
 
     public Reservation(Date checkInDate, Date checkOutDate, ReservationStatusEnum status, BigDecimal totalAmount, Guest guest, RoomType roomType, Room room, Partner partner) {

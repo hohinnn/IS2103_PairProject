@@ -6,6 +6,7 @@ package ejb.session.stateless;
 
 import ejb.session.singleton.RoomAllocationSessionBeanLocal;
 import entity.Guest;
+import entity.Partner;
 import entity.Reservation;
 import entity.Room;
 import entity.RoomType;
@@ -48,10 +49,17 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
     @Override
     public List<Reservation> viewAllReservations(long guestID) {
-        Guest guest = em.createQuery("SELECT g from GUEST g WHERE g.guestID = :guestID", Guest.class)
+        Guest guest = em.createQuery("SELECT g FROM Guest g WHERE g.guestID = :guestID", Guest.class)
                 .setParameter("guestID", guestID)
                 .getSingleResult();
         return guest.getReservations();
+    }
+    
+    public List<Reservation> viewAllReservationsPartner(long partnerID) {
+        Partner partner = em.createQuery("SELECT p FROM Partner p WHERE p.partnerID = :partnerID", Partner.class)
+                .setParameter("partnerID", partnerID)
+                .getSingleResult();
+        return partner.getPartnerReservations();
     }
 
     @Override
@@ -122,6 +130,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         em.merge(reservation);
     }
 
+    @Override
     public Long createReservation(Long guestId, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception {
         Guest guest = em.find(Guest.class, guestId);
         RoomType roomType = em.find(RoomType.class, roomTypeId);
@@ -138,6 +147,33 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         // Create and persist the reservation without calculating the total amount
         Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, guest, roomType);
+        Long reservationID = createReservation(reservation);
+
+        // For same-day check-ins after 2 am, allocate a specific room immediately
+        if (isImmediateCheckIn) {
+            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservation);
+        }
+
+        return reservationID;
+    }
+    
+    @Override
+    public Long createReservationPartner(Long partnerID, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception {
+        Partner partner = em.find(Partner.class, partnerID);
+        RoomType roomType = em.find(RoomType.class, roomTypeId);
+
+        if (partner == null || roomType == null) {
+            throw new Exception("Guest or Room Type not found.");
+        }
+
+        // Check if there are enough rooms of the requested type available
+        boolean isAvailable = roomAllocationSessionBeanLocal.checkRoomTypeAvailability(roomType, checkInDate, checkOutDate);
+        if (!isAvailable) {
+            throw new Exception("No rooms available for the entire duration of the stay.");
+        }
+
+        // Create and persist the reservation without calculating the total amount
+        Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, roomType, partner);
         Long reservationID = createReservation(reservation);
 
         // For same-day check-ins after 2 am, allocate a specific room immediately

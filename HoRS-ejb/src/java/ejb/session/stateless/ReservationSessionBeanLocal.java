@@ -31,5 +31,9 @@ public interface ReservationSessionBeanLocal {
     public void checkOutGuest(long reservationId) throws ReservationNotFoundException;
 
     public Long createReservation(Long guestId, Long roomId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
+
+    public Long createReservationPartner(Long partnerID, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
+
+    public List<Reservation> viewAllReservationsPartner(long partnerID);
     
 }

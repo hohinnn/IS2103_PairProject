@@ -49,7 +49,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
     @Override
     public void allocateRoomsForDate(Date date) {
         List<Reservation> reservations = em.createQuery(
-                "SELECT r FROM Reservation r WHERE r.checkInDate = :date ORDER BY r.roomType.priority ASC", Reservation.class)
+                "SELECT r FROM Reservation r WHERE r.checkInDate = :date ORDER BY r.roomType.priorityRanking ASC", Reservation.class)
                 .setParameter("date", date)
                 .getResultList();
 

@@ -17,20 +17,23 @@ import javax.ejb.Remote;
  */
 @Remote
 public interface ReservationSessionBeanRemote {
-    
-        public Long createReservation(Reservation reservation);
-        
-        public List<Reservation> viewAllReservations(long guestID);
 
-        public Reservation viewReservation(long reservationID) throws ReservationNotFoundException;
+    public Long createReservation(Reservation reservation);
 
-        public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms);
+    public List<Reservation> viewAllReservations(long guestID);
 
-        public void checkInGuest(long reservationId) throws ReservationNotFoundException;
+    public Reservation viewReservation(long reservationID) throws ReservationNotFoundException;
 
-        public void checkOutGuest(long reservationId) throws ReservationNotFoundException;
-        
-        public Long createReservation(Long guestId, Long roomId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms);
 
-    
+    public void checkInGuest(long reservationId) throws ReservationNotFoundException;
+
+    public void checkOutGuest(long reservationId) throws ReservationNotFoundException;
+
+    public Long createReservation(Long guestId, Long roomId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
+
+    public Long createReservationPartner(Long partnerID, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
+
+    public List<Reservation> viewAllReservationsPartner(long partnerID);
+
 }
