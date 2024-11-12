@@ -20,6 +20,7 @@ import entity.RoomAllocation;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
+import enumType.RoomAvailabilityEnum;
 import enumType.RoomRateTypeEnum;
 import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
@@ -38,6 +39,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -175,9 +178,11 @@ public class MainApp {
         System.out.println("3: View Room Type Details");
         System.out.println("4: View All Room Types");
         System.out.println("5: Create New Room");
-        System.out.println("6: View All Rooms");
-        System.out.println("7: View Room Allocation Exception Report");
-        System.out.println("8: Trigger Allocation (for Testing)");
+        System.out.println("6: Update Room");
+        System.out.println("7: Delete Room");
+        System.out.println("8: View All Rooms");
+        System.out.println("9: View Room Allocation Exception Report");
+        System.out.println("10: Trigger Allocation (for Testing)");
     }
     
     private void displayMenuOptionsSalesManager() {
@@ -229,12 +234,18 @@ public class MainApp {
                 createNewRoom();
                 break;
             case 6:
-                viewAllRooms();
+                updateRoom();
                 break;
             case 7:
-                viewRoomAllocationExceptionReport();
+                deleteRoom();
                 break;
             case 8:
+                viewAllRooms();
+                break;
+            case 9:
+                viewRoomAllocationExceptionReport();
+                break;
+            case 10:
                 allocateRoomsForDate();
                 break;
             default:
@@ -559,19 +570,119 @@ public class MainApp {
     }
 
     private void createNewRoom() {
-        System.out.print("\n*** New Room *** ");
-        System.out.print("Enter Partner Name: ");
-        String name = scanner.nextLine().trim();
-        System.out.print("Enter username: ");
-        String username = scanner.nextLine().trim();
-        System.out.print("Enter password: ");
-        String password = scanner.nextLine().trim();
+        try {
+            System.out.println("\n*** Create New Room ***");
+            
+            // Get floor number and room sequence from user
+            System.out.print("Enter Room Number (e.g., 0102): ");
+            String roomNumber = scanner.nextLine();
+            
+            // Validate input format
+            if (roomNumber.length() != 4 || !roomNumber.matches("\\d{4}")) {
+                System.out.println("Invalid room number format. Please enter in the format 'FloorRoom' (e.g., 0102).");
+                return;
+            }
+            
+            int floorNumber = Integer.parseInt(roomNumber.substring(0, 2));
+            int roomSequence = Integer.parseInt(roomNumber.substring(2, 4));
+            
+            // RoomType selection
+            System.out.println("Select Room Type:");
+            List<RoomType> roomTypes = roomTypeSessionBeanRemote.getAllRoomTypes();
+            for (RoomType roomType : roomTypes) {
+                System.out.println(roomType.getRoomTypeID() + ": " + roomType.getName());
+            }
+            
+            System.out.print("Enter Room Type ID: ");
+            long roomTypeId = scanner.nextLong();
+            scanner.nextLine(); // Consume newline
+            
+            // Fetch the selected room type
+            RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeId);
+            if (roomType == null) {
+                System.out.println("Room Type not found.");
+                return;
+            }
+            
+            // Create a new room
+            Room room = new Room(floorNumber, roomSequence, RoomAvailabilityEnum.AVAILABLE, roomType);
+            
+            // Persist the new room
+            try {
+                roomSessionBeanRemote.createRoom(room); // Assuming you have a method to save the room
+                System.out.println("New room created successfully! Room Number: " + roomNumber);
+            } catch (Exception e) {
+                System.out.println("Error creating room: " + e.getMessage());
+            }
+        } catch (RoomTypeNotFoundException ex) {
+            System.out.println("RoomType Error:" + ex.getMessage());
+        }
+    }
+    
+    private void updateRoom() {
+        System.out.println("\n*** Update Room ***");
+        System.out.print("Enter Room Number (e.g., 0102): ");
+        String roomNumber = scanner.nextLine();
 
         try {
-            Partner partner = partnerSessionBeanRemote.createPartner(new Partner(name, username, password));
-            System.out.println("New Partner created successfully! Partner ID: " + partner.getPartnerID() + "\nPartner Name: " + partner.getPartnerName());
+            if (roomNumber.isEmpty() || !roomNumber.matches("\\d{4}")) {
+                System.out.println("Invalid room number format. Please enter in the format 'Floor+Room' (e.g., 0102).");
+                return;
+            }
+            Room room = roomSessionBeanRemote.getRoomByNumber(roomNumber);
+            
+            System.out.println("Enter new Room Status: (current: " + room.getStatus()+")");
+            System.out.println("1. AVAILABLE");
+            System.out.println("2. OCCUPIED");
+            
+            int intStatus = -1;
+            while (intStatus < 1 || intStatus > 2) {
+                intStatus = scanner.nextInt();
+                scanner.nextLine(); 
+                
+                if (intStatus < 1 || intStatus > 2) {
+                    System.out.println("Invalid option. Please try again.");
+                }
+            }
+
+            RoomAvailabilityEnum newStatus = (intStatus == 1) 
+                ? RoomAvailabilityEnum.AVAILABLE 
+                : RoomAvailabilityEnum.OCCUPIED;
+        
+            roomSessionBeanRemote.updateRoomStatus(roomNumber, newStatus);
+            System.out.println("Room updated successfully!");
+            System.out.println("Room " + roomNumber + " New Status: " + newStatus);
+
+        } catch (RoomNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid status provided: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error creating employee: " + e.getMessage());
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+    
+    private void deleteRoom() {
+        System.out.print("\n*** Delete Room ***\n");
+        System.out.print("Enter Room Number (e.g., 0102): ");
+        String roomNumber = scanner.nextLine();
+
+        try {
+            Room room = roomSessionBeanRemote.getRoomByNumber(roomNumber);
+
+            // Delete the room by its formatted number
+            roomSessionBeanRemote.deleteRoom(roomNumber);
+            
+            if (room.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
+                System.out.println(room.getStatus() + " Room deleted successfully.");
+            } else {
+                System.out.println(room.getStatus() +" Room marked as disabled successfully.");
+            }
+            
+        } catch (RoomNotFoundException e) {
+            System.out.println("Error deleting room: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
         }
     }
 

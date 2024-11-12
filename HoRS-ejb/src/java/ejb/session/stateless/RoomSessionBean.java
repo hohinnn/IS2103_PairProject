@@ -52,6 +52,17 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
     }
     
     @Override
+    public Room getRoomByNumber(String formattedRoomSequence) throws RoomNotFoundException {
+        try {
+            return em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)
+                     .setParameter("formattedRoomSequence", formattedRoomSequence)
+                     .getSingleResult();
+        } catch (NoResultException e) {
+            throw new RoomNotFoundException("Room " + formattedRoomSequence + " not found.");
+        }
+    }
+    
+    @Override
     public void updateRoomStatus(String formattedRoomSequence, RoomAvailabilityEnum newStatus) throws RoomNotFoundException {
         try {
             Room room = em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)
@@ -66,13 +77,13 @@ public class RoomSessionBean implements RoomSessionBeanRemote, RoomSessionBeanLo
     
     @Override
     public void deleteRoom(String formattedRoomSequence) throws RoomNotFoundException {
-        try {
-            Room room = em.createQuery("SELECT r FROM Room r WHERE r.formattedRoomSequence = :formattedRoomSequence", Room.class)
-                     .setParameter("formattedRoomSequence", formattedRoomSequence)
-                     .getSingleResult();
-            em.remove(room);
-        } catch (NoResultException e) {
-            throw new RoomNotFoundException("Room " + formattedRoomSequence + " not found.");
+        Room room = getRoomByNumber(formattedRoomSequence); // Reuse the new method
+    
+        if (room.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
+            em.remove(room); // Delete if status is AVAILABLE
+        } else { //excluded from the hotel room inventory for that room type and should not be allocated to a new reservation
+            room.setStatus(RoomAvailabilityEnum.DISABLED); // Mark as DISABLED
+            em.merge(room); 
         }
     }
     

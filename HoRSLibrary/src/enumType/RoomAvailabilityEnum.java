@@ -10,5 +10,6 @@ package enumType;
  */
 public enum RoomAvailabilityEnum {
     AVAILABLE,
-    OCCUPIED;
+    OCCUPIED,
+    DISABLED;
 }
