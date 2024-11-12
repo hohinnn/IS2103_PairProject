@@ -169,7 +169,7 @@ public class MainApp {
     }
     
     private void displayMenuOptionsOperationManager() {
-        System.out.println("*** HoRS Management Client -- Operation Manager ***\n");
+        System.out.println("\n*** HoRS Management Client -- Operation Manager ***\n");
         System.out.println("1: Logout");
         System.out.println("2: Create New Room Type");
         System.out.println("3: View Room Type Details");
@@ -357,7 +357,13 @@ public class MainApp {
 
     private void createNewRoomType() {
         System.out.print("\n*** New Room Type *** ");
-        System.out.print("Enter Room Type Option (1.Deluxe 2.Premier 3.Family 4.Junior Suite 5.Grand Suite): ");
+        System.out.print("Enter Room Type Option "
+                + "\n1.Deluxe "
+                + "\n2.Premier "
+                + "\n3.Family "
+                + "\n4.Junior Suite "
+                + "\n5.Grand Suite "
+                + "\n>");
         int name = scanner.nextInt();
         scanner.nextLine();
         System.out.print("Enter Description: ");
@@ -378,16 +384,22 @@ public class MainApp {
         switch(name) {
             case 1:
                 rtEnum = RoomTypeEnum.DELUXE;
+                break;
             case 2:
                 rtEnum = RoomTypeEnum.PREMIER;
+                break;
             case 3:
                 rtEnum = RoomTypeEnum.FAMILY;
+                break;
             case 4:
                 rtEnum = RoomTypeEnum.JUNIOR_SUITE;
+                break;
             case 5:
                 rtEnum= RoomTypeEnum.GRAND_SUITE;
+                break;
             default:
                 System.out.println("Error: Invalid Room Type Option"); //update message
+                return;
         }
         
         try {
@@ -401,13 +413,17 @@ public class MainApp {
 
     private void viewRoomTypeDetails() {
         System.out.println("\n*** View Room Type Details ***");
-        System.out.println("\nEnter Room Type ID:");
+        System.out.println("Enter Room Type ID:");
         long roomTypeID = scanner.nextLong();
         try {
             while (true) {
-                System.out.println("\n*** Room Type Details ***");
                 RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeID);
+                if (roomType == null) {
+                    System.out.println("Room type not found. Try again.");
+                    return;
+                }
                 
+                System.out.println("\n*** Room Type Details ***");
                 System.out.println("Name: " + roomType.getName());
                 System.out.println("Description: " + roomType.getDescription());
                 System.out.println("Size: " + roomType.getSize());
@@ -426,11 +442,11 @@ public class MainApp {
 
                 switch (choice) {
                     case 1:
-                        updateRoomType();
+                        updateRoomType(roomType);
                         break;
                     case 2:
-                        deleteRoomType();
-                        break;
+                        deleteRoomType(roomType);
+                        return; // exit method after deletion
                     case 3:
                         return;
                     default:
@@ -439,19 +455,16 @@ public class MainApp {
             }
         } catch (RoomTypeNotFoundException e) {
             System.out.println(e.getMessage());
+        } catch (Exception e) {
+        System.out.println("An unexpected error occurred: " + e.getMessage());
         }
     }
 
-    private void updateRoomType() {
+    private void updateRoomType(RoomType roomType) {
         System.out.print("\n*** Update Room Type ***\n");
-        System.out.print("Enter Room Type ID: ");
-        long roomTypeId = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
+        System.out.print("Room Type ID: " + roomType.getRoomTypeID() + "\n");
         
         try {
-            // Fetch the existing room type to display current values
-            RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeId);
-
             // RoomTypeEnum selection
             System.out.println("Select new Room Type:");
             System.out.println("1. DELUXE");
@@ -512,23 +525,21 @@ public class MainApp {
             amenities = amenities.isEmpty() ? roomType.getAmenities() : amenities;
 
             // Call session bean to update the Room Type
-            roomTypeSessionBeanRemote.updateRoomType(roomTypeId, name, description, size, bedType, capacity, amenities);
+            roomTypeSessionBeanRemote.updateRoomType(roomType.getRoomTypeID(), name, description, size, bedType, capacity, amenities);
             System.out.println("Room Type updated successfully!");
 
-        } catch (RoomTypeNotFoundException e) {
-            System.out.println("Error: " + e.getMessage());
+  
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private void deleteRoomType() {
+    private void deleteRoomType(RoomType roomType) {
         System.out.print("\n*** Delete Room Type ***\n");
-        System.out.print("Enter Room Type ID: ");
-        long roomTypeId = scanner.nextLong();
+        System.out.print("Room Type ID: " + roomType.getRoomTypeID() + "\n");
 
         try {
-            boolean deleted = roomTypeSessionBeanRemote.deleteRoomType(roomTypeId);
+            boolean deleted = roomTypeSessionBeanRemote.deleteRoomType(roomType.getRoomTypeID());
             if (deleted) {
                 System.out.println("Room Type deleted successfully.");
             } else {
