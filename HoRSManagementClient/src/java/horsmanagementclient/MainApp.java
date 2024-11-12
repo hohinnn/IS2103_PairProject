@@ -1028,6 +1028,11 @@ public class MainApp {
         String guestName = scanner.nextLine().trim();
         System.out.print("Enter Contact Number: ");
         String contactNumber = scanner.nextLine().trim();
+        System.out.print("Enter Email: ");
+        String email = scanner.nextLine().trim();
+        System.out.print("Enter Passport Number: ");
+        String passportNumber = scanner.nextLine().trim();
+        
 
     try {
         List<Room> rooms = new ArrayList<>();
@@ -1035,7 +1040,7 @@ public class MainApp {
             rooms.add(roomSessionBeanRemote.getRoomById(roomId));  
         }
 
-        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, checkInDate, checkOutDate, rooms);
+        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, email, passportNumber, checkInDate, checkOutDate, rooms);
         
         System.out.println("Rooms reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
         for (Reservation reservation : reservations) {
