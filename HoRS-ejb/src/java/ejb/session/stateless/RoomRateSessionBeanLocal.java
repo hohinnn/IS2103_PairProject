@@ -6,6 +6,7 @@ package ejb.session.stateless;
 
 import entity.RoomRate;
 import entity.RoomType;
+import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
 import exceptions.RoomRateInUseException;
 import exceptions.RoomRateNotFoundException;
@@ -23,7 +24,7 @@ public interface RoomRateSessionBeanLocal {
 
     public RoomRate createRoomRate(RoomRate roomRate);
 
-    public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException;
+    public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, RoomRateStatusEnum rateStatus, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException;
 
     public void deleteRoomRate(Long rateID) throws RoomRateNotFoundException, RoomRateInUseException;
 
