@@ -4,7 +4,6 @@
  */
 package entity;
 
-import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
 import java.io.Serializable;
 import javax.persistence.*;
@@ -28,9 +27,6 @@ public class RoomRate implements Serializable {
     @Enumerated(EnumType.STRING)
     private RoomRateTypeEnum rateType; // Published, Normal, Peak, Promotion
 
-    @Enumerated(EnumType.STRING)
-    private RoomRateStatusEnum status = RoomRateStatusEnum.ACTIVE; // ACTIVE or DISABLED
-    
     @Column(nullable = false)
     private BigDecimal ratePerNight;
 
@@ -50,17 +46,6 @@ public class RoomRate implements Serializable {
         this();
         this.name = name;
         this.rateType = rateType;
-        this.ratePerNight = ratePerNight;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
-    
-    public RoomRate(String name, RoomRateTypeEnum rateType, RoomRateStatusEnum status,
-                    BigDecimal ratePerNight, Date startDate, Date endDate) {
-        this();
-        this.name = name;
-        this.rateType = rateType;
-        this.status = status; // Set status
         this.ratePerNight = ratePerNight;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -121,14 +106,6 @@ public class RoomRate implements Serializable {
     public void setRoomType(RoomType roomType) {
         this.roomType = roomType;
     }
-
-    public RoomRateStatusEnum getStatus() {
-        return status;
-    }
-
-    public void setStatus(RoomRateStatusEnum status) {
-        this.status = status;
-    }
-       
+    
     
 }
