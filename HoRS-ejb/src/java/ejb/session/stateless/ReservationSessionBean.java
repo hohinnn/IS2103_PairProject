@@ -74,12 +74,10 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     }
 
     @Override
-    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
         Guest guest = new Guest();
         guest.setName(guestName);
         guest.setPhoneNumber(phoneNumber);
-        guest.setEmail(email);
-        guest.setPassportNumber(passportNumber);
         em.persist(guest);
 
         Date currentDate = new Date();
