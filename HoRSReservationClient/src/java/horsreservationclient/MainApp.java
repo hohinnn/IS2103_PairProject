@@ -444,7 +444,7 @@ if (roomChoice < 1 || roomChoice > availableRooms.size()) {
                 System.out.println("Check-in Date: " + r.getCheckInDate());
                 System.out.println("Check-out Date: " + r.getCheckOutDate());
                 System.out.println("Status: " + r.getStatus());
-                System.out.println("Total Amount: " + r.getTotalAmount());
+                System.out.println("Total Amount: $" + r.getTotalAmount());
                 System.out.println("----------------------------");
             }
         }

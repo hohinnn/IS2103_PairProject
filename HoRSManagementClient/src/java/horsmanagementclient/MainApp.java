@@ -285,7 +285,7 @@ public class MainApp {
 
     // Methods for each menu option
     private void createNewEmployee() {
-        System.out.print("*** New Employee *** ");
+        System.out.println("*** New Employee *** ");
         System.out.print("Enter username: ");
         String username = scanner.nextLine().trim();
 
@@ -342,7 +342,7 @@ public class MainApp {
     }
 
     private void createNewPartner() {
-        System.out.print("\n*** New Partner *** ");
+        System.out.println("\n*** New Partner *** ");
         System.out.print("Enter Partner Name: ");
         String name = scanner.nextLine().trim();
         System.out.print("Enter username: ");
@@ -368,7 +368,7 @@ public class MainApp {
     }
 
     private void createNewRoomType() {
-        System.out.print("\n*** New Room Type *** ");
+        System.out.println("\n*** New Room Type *** ");
         System.out.print("Enter Room Type Option "
                 + "\n1.Deluxe "
                 + "\n2.Premier "
