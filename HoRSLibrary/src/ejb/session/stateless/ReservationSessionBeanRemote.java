@@ -24,7 +24,7 @@ public interface ReservationSessionBeanRemote {
 
     public Reservation viewReservation(long reservationID) throws ReservationNotFoundException;
 
-    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms);
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, List<Room> rooms);
 
     public void checkInGuest(long reservationId) throws ReservationNotFoundException;
 
@@ -35,5 +35,7 @@ public interface ReservationSessionBeanRemote {
     public Long createReservationPartner(Long partnerID, Long roomTypeId, Date checkInDate, Date checkOutDate, boolean isImmediateCheckIn) throws Exception;
 
     public List<Reservation> viewAllReservationsPartner(long partnerID);
+
+    public Reservation viewReservationByGuest(Long reservationID, Long guestID) throws ReservationNotFoundException;
 
 }

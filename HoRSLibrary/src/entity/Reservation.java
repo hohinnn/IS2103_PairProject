@@ -40,16 +40,20 @@ public class Reservation implements Serializable {
     private Guest guest;
 
     @ManyToOne(optional = false)
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "ROOMTYPE_ROOMTYPEID", nullable = false)
     private RoomType roomType; // Requested room type for the reservation
 
     @ManyToOne
-    @JoinColumn(nullable = true)
-    private Room room; // The specific room assigned to this reservation
+    @JoinColumn(name = "ROOM_ROOMID", nullable = true) // Specific room assigned
+    private Room room;
     
     @ManyToOne
-    @JoinColumn(nullable = true) // adjust if your column is named differently
+    @JoinColumn(name = "partner_id", nullable = true) // Match the database column
     private Partner partner;
+    
+    @ManyToOne
+    @JoinColumn(name = "ROOM_RATE_ID", nullable = true) // Adjust the name if necessary
+    private RoomRate roomRate;
 
     public Partner getPartner() {
         return partner;
@@ -155,6 +159,14 @@ public class Reservation implements Serializable {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+    
+    public RoomRate getRoomRate() {
+        return roomRate;
+    }
+
+    public void setRoomRate(RoomRate roomRate) {
+        this.roomRate = roomRate;
     }
 
     

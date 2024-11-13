@@ -9,6 +9,7 @@ import entity.Guest;
 import entity.Partner;
 import entity.Reservation;
 import entity.Room;
+import entity.RoomRate;
 import entity.RoomType;
 import enumType.ReservationStatusEnum;
 import enumType.RoomAvailabilityEnum;
@@ -50,10 +51,28 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     @Override
     public List<Reservation> viewAllReservations(long guestID) {
         Guest guest = em.createQuery("SELECT g FROM Guest g WHERE g.guestID = :guestID", Guest.class)
-                .setParameter("guestID", guestID)
-                .getSingleResult();
-        return guest.getReservations();
+                        .setParameter("guestID", guestID)
+                        .getSingleResult();
+
+        // Eagerly fetch associated entities to avoid lazy loading issues
+        List<Reservation> reservations = em.createQuery(
+                "SELECT r FROM Reservation r " +
+                "JOIN FETCH r.roomType " +
+                "LEFT JOIN FETCH r.roomRate " +
+                "WHERE r.guest = :guest", 
+                Reservation.class)
+                .setParameter("guest", guest)
+                .getResultList();
+
+        return reservations;
     }
+
+   // public List<Reservation> viewAllReservations(long guestID) {
+   //     Guest guest = em.createQuery("SELECT g FROM Guest g LEFT JOIN FETCH g.reservations WHERE g.guestID = :guestID", Guest.class)
+   //         .setParameter("guestID", guestID)
+   //         .getSingleResult();
+    //    return guest.getReservations();
+   // }
     
     public List<Reservation> viewAllReservationsPartner(long partnerID) {
         Partner partner = em.createQuery("SELECT p FROM Partner p WHERE p.partnerID = :partnerID", Partner.class)
@@ -72,12 +91,25 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             throw new ReservationNotFoundException("Reservation " + reservationID + " not found!");
         }
     }
+    
+    @Override
+    public Reservation viewReservationByGuest(Long reservationID, Long guestID) throws ReservationNotFoundException {
+        Reservation reservation = em.find(Reservation.class, reservationID);
+
+        if (reservation == null || !reservation.getGuest().getGuestID().equals(guestID)) {
+            throw new ReservationNotFoundException("Reservation not found for the current guest.");
+        }
+
+        return reservation;
+    }
 
     @Override
-    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
         Guest guest = new Guest();
         guest.setName(guestName);
         guest.setPhoneNumber(phoneNumber);
+        guest.setEmail(email);
+        guest.setPassportNumber(passportNumber);
         em.persist(guest);
 
         Date currentDate = new Date();
@@ -90,6 +122,12 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
 
             Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, guest, roomType, room, null);
+            
+            // Fetch and assign the room rate
+            RoomRate roomRate = roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkInDate, checkOutDate);
+            if (roomRate != null) {
+                reservation.setRoomRate(roomRate);
+            }
             em.persist(reservation);
             reservations.add(reservation);
         }

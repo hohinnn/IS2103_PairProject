@@ -21,6 +21,7 @@ import entity.RoomRate;
 import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
 import enumType.RoomAvailabilityEnum;
+import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
 import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
@@ -186,7 +187,7 @@ public class MainApp {
     }
     
     private void displayMenuOptionsSalesManager() {
-        System.out.println("*** HoRS Management Client -- Sales Manager ***\n");
+        System.out.println("\n*** HoRS Management Client -- Sales Manager ***\n");
         System.out.println("1: Logout");
         System.out.println("2: Create New Room Rate");
         System.out.println("3: View Room Rate Details");
@@ -194,7 +195,7 @@ public class MainApp {
     }
     
     private void displayMenuOptionsGuestRelationOfficer() {
-        System.out.println("*** HoRS Management Client -- Guest Relation Officer ***\n");
+        System.out.println("\n*** HoRS Management Client -- Guest Relation Officer ***\n");
         System.out.println("1: Logout");
         System.out.println("2: Walk-in Reserve Room");
         System.out.println("3: Check-in Guest");
@@ -732,75 +733,114 @@ public class MainApp {
     }
 
     private void createNewRoomRate() {
-        System.out.print("\n*** New Room Rate ***\n");
-        System.out.print("Enter Rate Name: ");
-        String name = scanner.nextLine().trim();
-
-        System.out.print("Enter Room Type ID: ");
-        long roomTypeId = scanner.nextLong();
-        scanner.nextLine();
-
-        System.out.println("Choose Rate Type (1. Published, 2. Normal, 3. Peak, 4. Promotion): ");
-        int rateTypeOption = scanner.nextInt();
-        scanner.nextLine();
-
-        RoomRateTypeEnum rateType;
-        switch (rateTypeOption) {
-            case 1:
-                rateType = RoomRateTypeEnum.PUBLISHED;
-                break;
-            case 2:
-                rateType = RoomRateTypeEnum.NORMAL;
-                break;
-            case 3:
-                rateType = RoomRateTypeEnum.PEAK;
-                break;
-            case 4:
-                rateType = RoomRateTypeEnum.PROMOTION;
-                break;
-            default:
-            throw new IllegalArgumentException("Invalid Rate Type selection.");
-        }
-
-        System.out.print("Enter Rate per Night: ");
-        BigDecimal ratePerNight = scanner.nextBigDecimal();
-        scanner.nextLine(); // Consume newline
-
-        Date startDate = null;
-        Date endDate = null;
-
-        // Only prompt for start and end dates if rate type is Peak or Promotion
-        if (rateType == RoomRateTypeEnum.PEAK || rateType == RoomRateTypeEnum.PROMOTION) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-            try {
-                System.out.print("Enter Start Date (yyyy-MM-dd): ");
-                String startDateStr = scanner.nextLine().trim();
-                startDate = dateFormat.parse(startDateStr);
-
-                System.out.print("Enter End Date (yyyy-MM-dd): ");
-                String endDateStr = scanner.nextLine().trim();
-                endDate = dateFormat.parse(endDateStr);
-            } catch (ParseException e) {
-                System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
-                return;
+        try {
+            System.out.print("\n*** New Room Rate ***\n");
+                System.out.print("Enter Rate Name: ");
+                String name = scanner.nextLine().trim();
+                
+                //System.out.print("Enter Room Type ID: ");
+                //long roomTypeId = scanner.nextLong();
+                //scanner.nextLine();
+                
+                System.out.println("Choose Rate Type (1. Published, 2. Normal, 3. Peak, 4. Promotion): ");
+                int rateTypeOption = scanner.nextInt();
+                scanner.nextLine();
+                
+                RoomRateTypeEnum rateType;
+                switch (rateTypeOption) {
+                    case 1:
+                        rateType = RoomRateTypeEnum.PUBLISHED;
+                        break;
+                    case 2:
+                        rateType = RoomRateTypeEnum.NORMAL;
+                        break;
+                    case 3:
+                        rateType = RoomRateTypeEnum.PEAK;
+                        break;
+                    case 4:
+                        rateType = RoomRateTypeEnum.PROMOTION;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid Rate Type selection.");
+                }
+                
+                System.out.print("Enter Rate per Night: ");
+                BigDecimal ratePerNight = scanner.nextBigDecimal();
+                scanner.nextLine(); // Consume newline
+                
+                Date startDate = null;
+                Date endDate = null;
+                
+                // Only prompt for start and end dates if rate type is Peak or Promotion
+                if (rateType == RoomRateTypeEnum.PEAK || rateType == RoomRateTypeEnum.PROMOTION) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    
+                    try {
+                        System.out.print("Enter Start Date (yyyy-MM-dd): ");
+                        String startDateStr = scanner.nextLine().trim();
+                        startDate = dateFormat.parse(startDateStr);
+                        
+                        System.out.print("Enter End Date (yyyy-MM-dd): ");
+                        String endDateStr = scanner.nextLine().trim();
+                        endDate = dateFormat.parse(endDateStr);
+                    } catch (ParseException e) {
+                        System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+                        return;
+                    }
+                }
+                
+                // Prompt for Room Type
+                System.out.print("Enter Room Type ID: ");
+                long roomTypeId = scanner.nextLong();
+                scanner.nextLine();
+                
+                RoomType roomType = roomTypeSessionBeanRemote.viewRoomType(roomTypeId);
+                if (roomType == null) {
+                    System.out.println("Room Type not found. Please create it first.");
+                    return;
+                }
+                
+                try {
+                    RoomRate roomRate = new RoomRate(name, rateType, ratePerNight, startDate, endDate);
+                    roomRate.setRoomType(roomType); // Set the room type
+                    roomRateSessionBeanRemote.createRoomRate(roomRate);
+                    System.out.println("Room Rate created successfully!");
+                } catch (Exception e) {
+                    System.out.println("Error creating Room Rate: " + e.getMessage());
+                }
+            } catch (RoomTypeNotFoundException ex) {
+                System.out.println("Error: " + ex.getMessage());
             }
         }
-
-        try {
-            RoomRate roomRate = new RoomRate(name, rateType, ratePerNight, startDate, endDate);
-            roomRateSessionBeanRemote.createRoomRate(roomRate);
-            System.out.println("Room Rate created successfully!");
-        } catch (Exception e) {
-            System.out.println("Error creating Room Rate: " + e.getMessage());
-        }
-    }
 
 
     private void viewRoomRateDetails() {
         while (true) {
             System.out.println("\n*** Room Rate Details ***");
             //show room details here
+            System.out.print("Enter Room Rate ID: ");
+            long rateId = scanner.nextLong();
+            scanner.nextLine(); // Consume newline
+
+            try {
+                RoomRate roomRate = roomRateSessionBeanRemote.getRoomRate(rateId);
+
+                System.out.println("ID: " + roomRate.getRateID());
+                System.out.println("Name: " + roomRate.getName());
+                System.out.println("Rate Type: " + roomRate.getRateType());
+                System.out.println("Rate per Night: " + roomRate.getRatePerNight());
+                System.out.println("Start Date: " + (roomRate.getStartDate() != null ? roomRate.getStartDate(): "N/A") );
+                System.out.println("End Date: " + (roomRate.getEndDate()!= null ? roomRate.getEndDate(): "N/A") );
+                System.out.println("Room Type: " + (roomRate.getRoomType() != null ? roomRate.getRoomType().getName() : "N/A"));
+                System.out.println("Room Status: " + roomRate.getStatus());
+
+            } catch (RoomRateNotFoundException e) {
+                System.out.println("Error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+            }
+            
+            System.out.println();
             System.out.println("1. Update Room Rate");
             System.out.println("2. Delete Room Rate");
             System.out.println("3. Exit");
@@ -810,11 +850,11 @@ public class MainApp {
 
             switch (choice) {
                 case 1:
-                    updateRoomRate();
+                    updateRoomRate(rateId);
                     break;
                 case 2:
-                    deleteRoomRate();
-                    break;
+                    deleteRoomRate(rateId);
+                    return;
                 case 3:
                     return;
                 default:
@@ -823,11 +863,8 @@ public class MainApp {
         }
     }
 
-    private void updateRoomRate() {
+    private void updateRoomRate(Long roomRateId) {
         System.out.print("\n*** Update Room Rate ***\n");
-        System.out.print("Enter Room Rate ID: ");
-        long roomRateId = scanner.nextLong();
-        scanner.nextLine(); // Consume newline
 
         try {
             RoomRate roomRate = roomRateSessionBeanRemote.getRoomRate(roomRateId);
@@ -885,9 +922,12 @@ public class MainApp {
                     return;
                 }
             }
-
-            roomRateSessionBeanRemote.updateRoomRate(roomRateId, name, rateType, ratePerNight, startDate, endDate);
-            System.out.println("Room Rate updated successfully!");
+            
+            System.out.print("Enter new status (1. ACTIVE, 2. DISABLED): ");
+            int statusOption = scanner.nextInt();
+            RoomRateStatusEnum status = (statusOption == 2) ? RoomRateStatusEnum.DISABLED : RoomRateStatusEnum.ACTIVE;
+            
+            roomRateSessionBeanRemote.updateRoomRate(roomRateId, name, rateType, status, ratePerNight, startDate, endDate);            System.out.println("Room Rate updated successfully!");
         } catch (Exception e) {
             System.out.println("Error updating Room Rate: " + e.getMessage());
         }
@@ -895,17 +935,20 @@ public class MainApp {
 
 
     // Deletes a room rate if it’s not associated with any reservations; otherwise, marks it as disabled.
-    private void deleteRoomRate() {
+    private void deleteRoomRate(Long roomRateId) {
         System.out.print("\n*** Delete Room Rate ***\n");
-        System.out.print("Enter Room Rate ID: ");
-        long roomRateId = scanner.nextLong();
-        scanner.nextLine();
 
         try {
-            roomRateSessionBeanRemote.deleteRoomRate(roomRateId);
-            System.out.println("Room Rate deleted successfully.");            
-        } catch (RoomRateInUseException | RoomRateNotFoundException e) {
+            boolean isDeleted = roomRateSessionBeanRemote.deleteRoomRate(roomRateId);
+            if (isDeleted) {
+                System.out.println("Room Rate deleted successfully.");
+            } else {
+                System.out.println("Room Rate marked as disabled successfully.");
+            }
+        } catch (RoomRateInUseException e) {
             System.out.println("Error deleting Room Rate: " + e.getMessage());
+        } catch (RoomRateNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
     
@@ -927,7 +970,7 @@ public class MainApp {
         System.out.println("\n*** Room Rates List ***");
         List<RoomRate> roomRates = roomRateSessionBeanRemote.getAllRoomRates();
         for (RoomRate r : roomRates) {
-            System.out.println("ID: "+ r.getRateID() + " | Name: " + r.getName() +  "| Role: " + r.getRateType());
+            System.out.println("ID: "+ r.getRateID() + " | Name: " + r.getName() +  " | RateType: " + r.getRateType() + " | RoomType: " + r.getRoomType().getName());
         }
     }
     
@@ -988,6 +1031,10 @@ public class MainApp {
         String guestName = scanner.nextLine().trim();
         System.out.print("Enter Contact Number: ");
         String contactNumber = scanner.nextLine().trim();
+        System.out.print("Enter Email: ");
+        String email = scanner.nextLine().trim();
+        System.out.print("Enter Passport Number: ");
+        String passportNumber = scanner.nextLine().trim();
 
     try {
         List<Room> rooms = new ArrayList<>();
@@ -995,13 +1042,14 @@ public class MainApp {
             rooms.add(roomSessionBeanRemote.getRoomById(roomId));  
         }
 
-        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, checkInDate, checkOutDate, rooms);
-        
+        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, email, passportNumber, checkInDate, checkOutDate, rooms);        
         System.out.println("Rooms reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
         for (Reservation reservation : reservations) {
             System.out.println("Reservation ID: " + reservation.getReservationID() + ", Room: " + reservation.getRoom().getFormattedRoomSequence() + ", Status: " + reservation.getStatus());
         }
     } catch (RoomNotFoundException e) {
+        System.out.println("Error during reservation: " + e.getMessage());
+    } catch (Exception e) {
         System.out.println("Error during reservation: " + e.getMessage());
     }
 }

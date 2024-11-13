@@ -30,10 +30,10 @@ public class Guest implements Serializable {
     @Column(length = 9, nullable = false, unique = true)
     private String passportNumber;
     
-    @Column(length = 32,nullable = false, unique = true)
+    @Column(length = 32,nullable = true, unique = true)
     private String username;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String password;
 
     @OneToMany(mappedBy = "guest")

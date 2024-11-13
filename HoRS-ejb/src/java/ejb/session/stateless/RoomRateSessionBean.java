@@ -6,6 +6,7 @@ package ejb.session.stateless;
 
 import entity.RoomRate;
 import entity.RoomType;
+import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
 import exceptions.RoomRateInUseException;
 import exceptions.RoomRateNotFoundException;
@@ -37,14 +38,14 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     }
     
     @Override
-    public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException {
-        RoomRate roomRate = em.find(RoomRate.class, rateID);
+    public void updateRoomRate(Long rateID, String name, RoomRateTypeEnum rateType, RoomRateStatusEnum rateStatus, BigDecimal ratePerNight, Date startDate, Date endDate) throws RoomRateNotFoundException {        RoomRate roomRate = em.find(RoomRate.class, rateID);
         if (roomRate == null) {
             throw new RoomRateNotFoundException("Room Rate ID " + rateID + " not found.");
         }
         
         roomRate.setName(name);
         roomRate.setRateType(rateType);
+        roomRate.setStatus(rateStatus);
         roomRate.setRatePerNight(ratePerNight);
         roomRate.setStartDate(startDate);
         roomRate.setEndDate(endDate);
@@ -52,7 +53,7 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     }
     
     @Override
-    public void deleteRoomRate(Long rateID) throws RoomRateNotFoundException, RoomRateInUseException {
+    public boolean deleteRoomRate(Long rateID) throws RoomRateNotFoundException, RoomRateInUseException {
         RoomRate roomRate = em.find(RoomRate.class, rateID);
 
         if (roomRate == null) {
@@ -65,11 +66,15 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
         Long count = (Long) query.getSingleResult();
 
         if (count > 0) {
-            throw new RoomRateInUseException("Room Rate ID " + rateID + " is associated with existing reservations and cannot be deleted.");
+            roomRate.setStatus(RoomRateStatusEnum.DISABLED); 
+            em.merge(roomRate); // Update the status in the database
+            System.out.println("Room Rate ID " + rateID + " marked as disabled.");
+            return false; // Exit the method        
         }
 
         // Proceed with deletion if not associated with any reservations
         em.remove(roomRate);
+        return true;
     }
 
     
