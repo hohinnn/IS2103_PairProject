@@ -20,9 +20,9 @@
 
 <xs:element name="partnerLoginResponse" type="tns:partnerLoginResponse"/>
 
-<xs:element name="reserveRooms" type="tns:reserveRooms"/>
+<xs:element name="reserveRoomType" type="tns:reserveRoomType"/>
 
-<xs:element name="reserveRoomsResponse" type="tns:reserveRoomsResponse"/>
+<xs:element name="reserveRoomTypeResponse" type="tns:reserveRoomTypeResponse"/>
 
 <xs:element name="searchAvailableRooms" type="tns:searchAvailableRooms"/>
 
@@ -126,27 +126,6 @@
 </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="reserveRooms">
-<xs:sequence>
-<xs:element name="partnerId" type="xs:long" minOccurs="0"/>
-<xs:element name="roomId" type="xs:long" minOccurs="0"/>
-<xs:element name="checkInDate" type="xs:anySimpleType" minOccurs="0"/>
-<xs:element name="checkOutDate" type="xs:anySimpleType" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="reserveRoomsResponse">
-<xs:sequence>
-<xs:element name="return" type="xs:long" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="RoomNotFoundException">
-<xs:sequence>
-<xs:element name="message" type="xs:string" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
 <xs:complexType name="getPublishedRateForRoomType">
 <xs:sequence>
 <xs:element name="roomType" type="tns:roomType" minOccurs="0"/>
@@ -183,6 +162,27 @@
 <xs:complexType name="getRoomByIdResponse">
 <xs:sequence>
 <xs:element name="return" type="tns:room" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="RoomNotFoundException">
+<xs:sequence>
+<xs:element name="message" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="reserveRoomType">
+<xs:sequence>
+<xs:element name="partnerId" type="xs:long" minOccurs="0"/>
+<xs:element name="roomTypeId" type="xs:long" minOccurs="0"/>
+<xs:element name="checkInDate" type="xs:anySimpleType" minOccurs="0"/>
+<xs:element name="checkOutDate" type="xs:anySimpleType" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="reserveRoomTypeResponse">
+<xs:sequence>
+<xs:element name="return" type="xs:long" minOccurs="0"/>
 </xs:sequence>
 </xs:complexType>
 
@@ -269,6 +269,7 @@
 <xs:restriction base="xs:string">
 <xs:enumeration value="CHECKED_IN"/>
 <xs:enumeration value="RESERVED"/>
+<xs:enumeration value="ALLOCATED"/>
 <xs:enumeration value="COMPLETED"/>
 </xs:restriction>
 </xs:simpleType>
