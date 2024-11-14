@@ -4,7 +4,7 @@
  */
 package holidayreservationsystem;
 
-import ejb.session.ws.ReservationSystemWebService_Service;
+import ws.holidayReservationSystem.*;
 
 /**
  *

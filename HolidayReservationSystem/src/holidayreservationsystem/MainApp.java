@@ -4,7 +4,6 @@
  */
 package holidayreservationsystem;
 
-import ejb.session.ws.*;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -20,6 +19,7 @@ import java.util.stream.Collectors;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import ws.holidayReservationSystem.*;
 
 /**
  *
