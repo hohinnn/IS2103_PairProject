@@ -74,11 +74,23 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     //    return guest.getReservations();
    // }
     
+    @Override
     public List<Reservation> viewAllReservationsPartner(long partnerID) {
         Partner partner = em.createQuery("SELECT p FROM Partner p WHERE p.partnerID = :partnerID", Partner.class)
-                .setParameter("partnerID", partnerID)
-                .getSingleResult();
-        return partner.getPartnerReservations();
+                        .setParameter("partnerID", partnerID)
+                        .getSingleResult();
+
+        // Eagerly fetch associated entities to avoid lazy loading issues
+        List<Reservation> reservations = em.createQuery(
+                "SELECT r FROM Reservation r " +
+                "JOIN FETCH r.roomType " +
+                "LEFT JOIN FETCH r.roomRate " +
+                "WHERE r.partner = :partner", 
+                Reservation.class)
+                .setParameter("partner", partner)
+                .getResultList();
+
+        return reservations;
     }
 
     @Override

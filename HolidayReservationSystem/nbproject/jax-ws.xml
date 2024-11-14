@@ -5,7 +5,7 @@
     <client name="ReservationSystemWebService">
       <wsdl-url>http://localhost:8080/ReservationSystemWebService/ReservationSystemWebService?wsdl</wsdl-url>
       <local-wsdl-file>localhost_8080/ReservationSystemWebService/ReservationSystemWebService.wsdl</local-wsdl-file>
-      <package-name forceReplace="true">ws.holidayReservationSystem</package-name>
+      <package-name forceReplace="true">holidayreservationsystem</package-name>
       <catalog-file>catalog.xml</catalog-file>
       <wsimport-options>
         <wsimport-option>
@@ -34,7 +34,7 @@
         </wsimport-option>
         <wsimport-option>
           <wsimport-option-name>package</wsimport-option-name>
-          <wsimport-option-value>ws.holidayReservationSystem</wsimport-option-value>
+          <wsimport-option-value>holidayreservationsystem</wsimport-option-value>
         </wsimport-option>
       </wsimport-options>
     </client>

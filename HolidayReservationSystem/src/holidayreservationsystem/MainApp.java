@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import ws.holidayReservationSystem.*;
 
 /**
  *
@@ -288,7 +287,7 @@ public class MainApp {
         scanner.nextLine(); 
         
         try {
-            Reservation r = service.getReservationSystemWebServicePort().viewPartnerReservationDetails(response);
+            Reservation r = service.getReservationSystemWebServicePort().viewPartnerReservationDetails(response, currentPartner.getPartnerID());
             System.out.println("*** Reservation ID: " + r.getReservationID() + " ***");
             System.out.println("Room Type: " + r.getRoomType().getName());
             System.out.println("Check-in Date: " + r.getCheckInDate());
@@ -309,14 +308,18 @@ public class MainApp {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        for (Reservation r : reservations) {
-            System.out.println("Reservation ID: " + r.getReservationID());
-            System.out.println("Room Type: " + r.getRoomType().getName());
-            System.out.println("Check-in Date: " + r.getCheckInDate());
-            System.out.println("Check-out Date: " + r.getCheckOutDate());
-            System.out.println("Status: " + r.getStatus());
-            System.out.println("Total Amount: $" + r.getTotalAmount());
-            System.out.println("----------------------------");
+        if (reservations == null || reservations.isEmpty()) {
+        System.out.println("No reservations found for this partner.");
+        } else {
+            for (Reservation r : reservations) {
+                System.out.println("Reservation ID: " + r.getReservationID());
+                System.out.println("Room Type: " + r.getRoomType().getName());
+                System.out.println("Check-in Date: " + r.getCheckInDate());
+                System.out.println("Check-out Date: " + r.getCheckOutDate());
+                System.out.println("Status: " + r.getStatus());
+                System.out.println("Total Amount: $" + r.getTotalAmount());
+                System.out.println("----------------------------");
+            }
         }
     }
 

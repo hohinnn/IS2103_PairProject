@@ -19,7 +19,7 @@
     <target name="wsimport-client-ReservationSystemWebService" depends="wsimport-init">
         <mkdir dir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService"/>
         <property name="wsdl-ReservationSystemWebService" location="xml-resources/web-service-references/ReservationSystemWebService/wsdl/localhost_8080/ReservationSystemWebService/ReservationSystemWebService.wsdl"/>
-        <wsimport sourcedestdir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService" destdir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService" wsdl="${wsdl-ReservationSystemWebService}" catalog="catalog.xml" encoding="${source.encoding}" extension="true" verbose="true" fork="false" wsdlLocation="http://localhost:8080/ReservationSystemWebService/ReservationSystemWebService?wsdl" xnocompile="true" xendorsed="true" package="ws.holidayReservationSystem">
+        <wsimport sourcedestdir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService" destdir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService" wsdl="${wsdl-ReservationSystemWebService}" catalog="catalog.xml" encoding="${source.encoding}" extension="true" verbose="true" fork="false" wsdlLocation="http://localhost:8080/ReservationSystemWebService/ReservationSystemWebService?wsdl" xnocompile="true" xendorsed="true" package="holidayreservationsystem">
             <depends file="${wsdl-ReservationSystemWebService}"/>
             <produces dir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService"/>
         </wsimport>
@@ -31,7 +31,7 @@
     </target>
     <target name="wsimport-client-clean-ReservationSystemWebService" depends="-init-project">
         <delete dir="${build.generated.dir}/jax-wsCache/ReservationSystemWebService"/>
-        <delete dir="${build.generated.sources.dir}/jax-ws/ws/holidayReservationSystem"/>
+        <delete dir="${build.generated.sources.dir}/jax-ws/holidayreservationsystem"/>
     </target>
     <target name="wsimport-client-generate" depends="wsimport-client-ReservationSystemWebService"/>
 </project>

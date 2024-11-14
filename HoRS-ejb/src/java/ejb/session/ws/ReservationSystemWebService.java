@@ -139,7 +139,7 @@ public class ReservationSystemWebService {
             for (Reservation r : reservations) {
                 detachedReservations.add(detachReservation(r));
             }
-            return reservations;
+            return detachedReservations;
         } catch (Exception e) {
             System.out.println("Error retrieving reservations: " + e.getMessage());
             return null;
