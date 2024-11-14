@@ -43,6 +43,7 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.ejb.EJB;
 
 /**
  *
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 public class MainApp {
     
 
+    @EJB
     private EmployeeSessionBeanRemote employeeSessionBeanRemote;
     private GuestSessionBeanRemote guestSessionBeanRemote;
     private PartnerSessionBeanRemote partnerSessionBeanRemote;
@@ -124,11 +126,17 @@ public class MainApp {
 
         try {
             currentEmployee = employeeSessionBeanRemote.loginEmployee(username, password);
-            System.out.println("Login successful! Welcome " + currentEmployee.getUsername() + ".\n");
-            EmployeeAccessRightEnum accessRight = currentEmployee.getAccessRight();
-            menuMain(accessRight);
+            if (currentEmployee != null) {
+                System.out.println("Login successful! Welcome " + currentEmployee.getUsername() + ".\n");
+                EmployeeAccessRightEnum accessRight = currentEmployee.getAccessRight();
+                menuMain(accessRight);
+            } else {
+                System.out.println("Invalid login credentials.");
+            }
         } catch (EmployeeNotFoundException e) {
             System.out.println("Invalid login: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();  // Catch any unexpected exceptions and print the stack trace for debugging
         }
     }
 
