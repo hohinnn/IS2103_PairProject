@@ -195,8 +195,15 @@ public class MainApp {
             return;
         }
 
-        System.out.print("Enter Room Type ID to Reserve: ");
-        Long roomTypeId = Long.parseLong(scanner.nextLine().trim());
+        List<RoomType> availableRoomTypes = service.getReservationSystemWebServicePort().getAllRoomTypes();
+        System.out.println("Select Room Type:");
+        for (int i = 0; i < availableRoomTypes.size(); i++) {
+            System.out.println((i + 1) + ": " + availableRoomTypes.get(i).getName());
+        }
+        System.out.println("");
+        int response = scanner.nextInt();
+        scanner.nextLine();
+        Long roomTypeId = availableRoomTypes.get(response-1).getRoomTypeID();
 
         System.out.print("Enter Number of Rooms to Reserve: ");
         int numberOfRooms = Integer.parseInt(scanner.nextLine().trim());

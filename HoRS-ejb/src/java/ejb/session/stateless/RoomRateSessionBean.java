@@ -115,7 +115,9 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
             days = 1; // Count as 1 night
         }
         
-        return bestRate.getRatePerNight().multiply(BigDecimal.valueOf(days));
+        BigDecimal totalAmount = bestRate.getRatePerNight().multiply(BigDecimal.valueOf(days));
+        
+        return totalAmount;
     }
     
     // for walk-in search room use case

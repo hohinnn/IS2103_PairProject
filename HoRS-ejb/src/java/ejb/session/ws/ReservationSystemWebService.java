@@ -123,8 +123,6 @@ public class ReservationSystemWebService {
         // Calculate total rate for the stay
         BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
 
-        // Select the first available room for reservation (you can modify this logic if you want to reserve more than one)
-        Room selectedRoom = availableRoomOfType.get(0);
 
         // Create a new reservation
         Reservation reservation = new Reservation();
@@ -133,7 +131,7 @@ public class ReservationSystemWebService {
         reservation.setStatus(ReservationStatusEnum.RESERVED);
         reservation.setTotalAmount(totalAmount);
         reservation.setPartner(partner);
-        reservation.setRoom(selectedRoom);
+        reservation.setRoom(null);
         reservation.setRoomType(roomType);
 
         // Get and set the applicable room rate
@@ -201,6 +199,16 @@ public class ReservationSystemWebService {
         Date checkIn = checkInDate.toGregorianCalendar().getTime();
         Date checkOut = checkOutDate.toGregorianCalendar().getTime();
         return detachRoomRate(roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkIn, checkOut));
+    }
+
+    @WebMethod(operationName = "getAllRoomTypes")
+    public List<RoomType> getAllRoomTypes() {
+        List<RoomType> rtList = roomTypeSessionBeanLocal.getAllRoomTypes();
+        List<RoomType> detachRtList = new ArrayList();
+        for (RoomType rt : rtList) {
+            detachRtList.add(detachRoomType(rt));
+        }
+        return detachRtList;
     }
 
     private Room detachRoom(Room room) {

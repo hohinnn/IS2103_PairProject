@@ -8,6 +8,10 @@
 
 <xs:element name="calculateRateForRoomTypeResponse" type="tns:calculateRateForRoomTypeResponse"/>
 
+<xs:element name="getAllRoomTypes" type="tns:getAllRoomTypes"/>
+
+<xs:element name="getAllRoomTypesResponse" type="tns:getAllRoomTypesResponse"/>
+
 <xs:element name="getPublishedRateForRoomType" type="tns:getPublishedRateForRoomType"/>
 
 <xs:element name="getPublishedRateForRoomTypeResponse" type="tns:getPublishedRateForRoomTypeResponse"/>
@@ -126,6 +130,16 @@
 </xs:sequence>
 </xs:complexType>
 
+<xs:complexType name="getAllRoomTypes">
+<xs:sequence/>
+</xs:complexType>
+
+<xs:complexType name="getAllRoomTypesResponse">
+<xs:sequence>
+<xs:element name="return" type="tns:roomType" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
 <xs:complexType name="getPublishedRateForRoomType">
 <xs:sequence>
 <xs:element name="roomType" type="tns:roomType" minOccurs="0"/>
@@ -153,24 +167,6 @@
 </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="getRoomById">
-<xs:sequence>
-<xs:element name="roomId" type="xs:long" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="getRoomByIdResponse">
-<xs:sequence>
-<xs:element name="return" type="tns:room" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="RoomNotFoundException">
-<xs:sequence>
-<xs:element name="message" type="xs:string" minOccurs="0"/>
-</xs:sequence>
-</xs:complexType>
-
 <xs:complexType name="reserveRoomType">
 <xs:sequence>
 <xs:element name="partnerId" type="xs:long" minOccurs="0"/>
@@ -183,6 +179,24 @@
 <xs:complexType name="reserveRoomTypeResponse">
 <xs:sequence>
 <xs:element name="return" type="xs:long" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="RoomNotFoundException">
+<xs:sequence>
+<xs:element name="message" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="getRoomById">
+<xs:sequence>
+<xs:element name="roomId" type="xs:long" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="getRoomByIdResponse">
+<xs:sequence>
+<xs:element name="return" type="tns:room" minOccurs="0"/>
 </xs:sequence>
 </xs:complexType>
 
