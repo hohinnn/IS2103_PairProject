@@ -185,37 +185,55 @@ public class MainApp {
         System.out.println("\n*** Reserve Hotel Room ***\n");
         java.util.Date checkInDate = null;
         java.util.Date checkOutDate = null;
-        try{
+
+        try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             checkInDate = dateFormat.parse(checkInDateStr);
             checkOutDate = dateFormat.parse(checkOutDateStr);
         } catch (ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error parsing dates: " + e.getMessage());
+            return;
         }
-        System.out.print("Enter Room IDs to Reserve (comma-separated, e.g., 101,102): ");
-        String roomIdStr = scanner.nextLine().trim();
-        List<Long> selectedRoomIds = Arrays.stream(roomIdStr.split(","))
-                .map(Long::parseLong)
-                .collect(Collectors.toList());
+
+        System.out.print("Enter Room Type ID to Reserve: ");
+        Long roomTypeId = Long.parseLong(scanner.nextLine().trim());
+
+        System.out.print("Enter Number of Rooms to Reserve: ");
+        int numberOfRooms = Integer.parseInt(scanner.nextLine().trim());
 
         try {
             XMLGregorianCalendar checkInXMLDate = convertToXMLGregorianCalendar(checkInDate);
             XMLGregorianCalendar checkOutXMLDate = convertToXMLGregorianCalendar(checkOutDate);
+
             List<Long> reservationIDs = new ArrayList<>();
 
-            for (Long roomId : selectedRoomIds) {
-            Long reservationID = service.getReservationSystemWebServicePort().reserveRooms(currentPartner.getPartnerID(), roomId, checkInXMLDate, checkOutXMLDate);
-                reservationIDs.add(reservationID);
+            for (int i = 0; i < numberOfRooms; i++) {
+                Long reservationID = service.getReservationSystemWebServicePort().reserveRoomType(
+                        currentPartner.getPartnerID(), roomTypeId, checkInXMLDate, checkOutXMLDate);
+
+                if (reservationID != null) {
+                    reservationIDs.add(reservationID);
+                } else {
+                    System.out.println("Unable to reserve one of the requested rooms; not all rooms could be reserved.");
+                    break;
+                }
             }
-            System.out.println("Rooms reserved successfully for " + this.currentPartner.getPartnerName() + " from " + checkInDateStr + " to " + checkOutDateStr);
-            for (Long reservationID : reservationIDs) {
-                System.out.println("Reservation ID: " + reservationID);
+
+            if (!reservationIDs.isEmpty()) {
+                System.out.println("Rooms reserved successfully for " + this.currentPartner.getPartnerName() +
+                                   " from " + checkInDateStr + " to " + checkOutDateStr);
+                for (Long reservationID : reservationIDs) {
+                    System.out.println("Reservation ID: " + reservationID);
+                }
+            } else {
+                System.out.println("No rooms could be reserved. Please check availability and try again.");
             }
+
         } catch (Exception e) {
             System.out.println("Error during reservation: " + e.getMessage());
         }
-        
     }
+
 
     public void searchHotelRoomFunction(String checkInDateStr, String checkOutDateStr) {
         System.out.println("\n*** Search Hotel Room ***\n");

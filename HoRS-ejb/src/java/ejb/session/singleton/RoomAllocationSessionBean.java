@@ -4,11 +4,13 @@
  */
 package ejb.session.singleton;
 
+import ejb.session.stateless.RoomRateSessionBeanLocal;
 import entity.Reservation;
 import entity.Room;
 import entity.RoomAllocation;
 import entity.RoomRate;
 import entity.RoomType;
+import enumType.ReservationStatusEnum;
 import enumType.RoomAvailabilityEnum;
 import enumType.RoomRateTypeEnum;
 import java.math.BigDecimal;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.persistence.EntityManager;
@@ -39,8 +42,11 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
     private static final Logger LOGGER = Logger.getLogger(RoomAllocationSessionBean.class.getName());
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
+    @EJB
+    private RoomRateSessionBeanLocal roomRateSessionBeanLocal;
+    
     @Override
-    @Schedule(hour = "2", minute = "0", persistent = false)
+    @Schedule(hour = "2", minute = "0", persistent = true)
     public void allocateRoomsDaily() {
         Date today = new Date();
         allocateRoomsForDate(today);
@@ -64,23 +70,27 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
         Room allocatedRoom = findAvailableRoomOrUpgrade(
                 reservation.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate());
 
-        if (allocatedRoom != null) {
+        if (allocatedRoom != null && allocatedRoom.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
             // Assign the room to the reservation
             reservation.setRoom(allocatedRoom);
             allocatedRoom.setStatus(RoomAvailabilityEnum.OCCUPIED);
+            reservation.setStatus(ReservationStatusEnum.ALLOCATED);
             em.merge(allocatedRoom);
 
             // Calculate the total amount based on the prevailing rates for each night of stay
             BigDecimal totalAmount = calculateTotalAmount(reservation);
             reservation.setTotalAmount(totalAmount);
+            reservation.setRoomType(allocatedRoom.getRoomType());
+            reservation.setRoomRate(roomRateSessionBeanLocal.getPublishedRateForRoomType(allocatedRoom.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate()));
             em.merge(reservation);
 
             if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
-                logRoomAllocationException(reservation, "Room upgraded to next higher tier.");
+                logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier.");
             }
-        } else {
-            logRoomAllocationException(reservation, "No rooms available, manual handling required.");
-        }
+            } else {
+                // Log a Type 2 exception if no rooms are available
+                logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types.");
+            }
     }
 
     // Finds an available room in the requested room type or next higher tier
@@ -115,7 +125,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
                     .setParameter("checkOutDate", checkOutDate)
                     .getResultList();
 
-            if (overlappingReservations.isEmpty()) {
+            if (overlappingReservations.isEmpty() && room.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
                 return room; // Room is available for the entire duration
             }
         }

@@ -11,5 +11,6 @@ package enumType;
 public enum ReservationStatusEnum {
     CHECKED_IN,
     RESERVED,
+    ALLOCATED,
     COMPLETED;
 }

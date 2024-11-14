@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ejb.EJB;
 import javax.jws.WebService;
 import javax.jws.WebMethod;
@@ -86,22 +87,45 @@ public class ReservationSystemWebService {
         return detachedRooms;
     }
 
-    @WebMethod(operationName = "reserveRooms")
-    public Long reserveRooms(@WebParam(name = "partnerId") Long partnerId,
-            @WebParam(name = "roomId") Long roomId,
-            @WebParam(name = "checkInDate") XMLGregorianCalendar checkInDate,
-            @WebParam(name = "checkOutDate") XMLGregorianCalendar checkOutDate) throws RoomNotFoundException {
+    @WebMethod(operationName = "reserveRoomType")
+    public Long reserveRoomType(@WebParam(name = "partnerId") Long partnerId,
+                                @WebParam(name = "roomTypeId") Long roomTypeId,
+                                @WebParam(name = "checkInDate") XMLGregorianCalendar checkInDate,
+                                @WebParam(name = "checkOutDate") XMLGregorianCalendar checkOutDate) 
+                                throws RoomNotFoundException {
         Date checkIn = checkInDate.toGregorianCalendar().getTime();
         Date checkOut = checkOutDate.toGregorianCalendar().getTime();
-        Room room = roomSessionBeanLocal.getRoomById(roomId);
+
+        // Find partner and validate
         Partner partner = em.find(Partner.class, partnerId);
         if (partner == null) {
             throw new IllegalArgumentException("Partner not found for ID: " + partnerId);
         }
-        RoomType roomType = room.getRoomType();
-        
+
+        // Find room type and check availability
+        RoomType roomType = em.find(RoomType.class, roomTypeId);
+        if (roomType == null) {
+            throw new IllegalArgumentException("Room type not found for ID: " + roomTypeId);
+        }
+
+        // Get available rooms of the specified room type
+        List<Room> availableRooms = roomSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
+
+        // Filter available rooms by the requested room type
+        List<Room> availableRoomOfType = availableRooms.stream()
+                .filter(room -> room.getRoomType().getRoomTypeID().equals(roomTypeId))
+                .collect(Collectors.toList());
+
+        if (availableRoomOfType.isEmpty()) {
+            throw new RoomNotFoundException("No available rooms for the specified room type and date range.");
+        }
+
+        // Calculate total rate for the stay
         BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
-        
+
+        // Select the first available room for reservation (you can modify this logic if you want to reserve more than one)
+        Room selectedRoom = availableRoomOfType.get(0);
+
         // Create a new reservation
         Reservation reservation = new Reservation();
         reservation.setCheckInDate(checkIn);
@@ -109,15 +133,22 @@ public class ReservationSystemWebService {
         reservation.setStatus(ReservationStatusEnum.RESERVED);
         reservation.setTotalAmount(totalAmount);
         reservation.setPartner(partner);
-        reservation.setRoom(room);
+        reservation.setRoom(selectedRoom);
         reservation.setRoomType(roomType);
+
+        // Get and set the applicable room rate
         RoomRate roomRate = roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkIn, checkOut);
         if (roomRate != null) {
-                reservation.setRoomRate(roomRate);
+            reservation.setRoomRate(roomRate);
         }
-        reservation.setGuest(null);
+
+        reservation.setGuest(null); // Since this is a partner booking
+
+        // Persist reservation and return its ID
         return reservationSessionBeanLocal.createReservation(reservation);
     }
+
+
 
     @WebMethod(operationName = "viewPartnerReservationDetails")
     public Reservation viewPartnerReservationDetails(@WebParam(name = "reservationId") Long reservationId, 
