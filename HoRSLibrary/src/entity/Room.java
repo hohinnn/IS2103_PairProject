@@ -89,5 +89,9 @@ public class Room implements Serializable {
     public String getFormattedRoomSequence() {
         return formattedRoomSequence;
     }
+    
+    public void setFormattedRoomSequence(String formattedRoomSequence) {
+        this.formattedRoomSequence = formattedRoomSequence;
+    }
 
 }

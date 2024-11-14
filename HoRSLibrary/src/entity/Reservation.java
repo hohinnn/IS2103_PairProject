@@ -36,7 +36,7 @@ public class Reservation implements Serializable {
     private BigDecimal totalAmount;
 
     @ManyToOne(optional = false)
-    @JoinColumn(nullable = false)
+    @JoinColumn(nullable = true)
     private Guest guest;
 
     @ManyToOne(optional = false)

@@ -22,6 +22,7 @@ import exceptions.RoomNotFoundException;
 import exceptions.RoomTypeNotFoundException;
 import java.math.BigDecimal;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +65,8 @@ public class ReservationSystemWebService {
     public Partner partnerLogin(@WebParam(name = "username") String username,
             @WebParam(name = "password") String password) throws PartnerNotFoundException {
         try {
-            return partnerSessionBeanLocal.partnerLogin(username, password);
+            Partner partner = partnerSessionBeanLocal.partnerLogin(username, password);
+            return detachPartner(partner);
         } catch (PartnerNotFoundException e) {
             System.out.println(e.getMessage());
             return null;
@@ -72,39 +74,40 @@ public class ReservationSystemWebService {
     }
 
     @WebMethod(operationName = "searchAvailableRooms")
-    public List<Room> searchAvailableRooms(@WebParam(name = "checkInDate") Date checkInDate,
-            @WebParam(name = "checkOutDate") Date checkOutDate) {
-        List<Room> availableRooms = partnerSessionBeanLocal.searchAvailableRooms(checkInDate, checkOutDate);
+    public List<Room> searchAvailableRooms(@WebParam(name = "checkInDate") XMLGregorianCalendar checkInDate,
+            @WebParam(name = "checkOutDate") XMLGregorianCalendar checkOutDate) {
+        Date checkIn = checkInDate.toGregorianCalendar().getTime();
+        Date checkOut = checkOutDate.toGregorianCalendar().getTime();
+        List<Room> availableRooms = partnerSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
+        List<Room> detachedRooms = new ArrayList<>();
         for (Room room : availableRooms) {
-            RoomType roomType = room.getRoomType();
-            if (roomType != null) {
-                roomType.getRoomRates().size(); // Force fetch rates
-                for (RoomRate rate : roomType.getRoomRates()) {
-                    rate.getRoomType(); // Ensure RoomRate references are fetched
-                }
-            }
-
-            // Detach entities to prevent cyclic dependencies
-            em.detach(room);
-            em.detach(roomType);
-            for (RoomRate rr : roomType.getRoomRates()) {
-                em.detach(rr);
-            }
+            detachedRooms.add(detachRoom(room));
         }
-        return availableRooms;
+        return detachedRooms;
     }
 
     @WebMethod(operationName = "reserveRooms")
     public Long reserveRooms(@WebParam(name = "partnerId") Long partnerId,
-                            @WebParam(name = "roomId") Long roomId,
-                            @WebParam(name = "checkInDate") Date checkInDate,
-                            @WebParam(name = "checkOutDate") Date checkOutDate) throws RoomNotFoundException {
+            @WebParam(name = "roomId") Long roomId,
+            @WebParam(name = "checkInDate") XMLGregorianCalendar checkInDate,
+            @WebParam(name = "checkOutDate") XMLGregorianCalendar checkOutDate) throws RoomNotFoundException {
+        Date checkIn = checkInDate.toGregorianCalendar().getTime();
+        Date checkOut = checkOutDate.toGregorianCalendar().getTime();
         Room room = roomSessionBeanLocal.getRoomById(roomId);
+        Partner partner = em.find(Partner.class, partnerId);
         RoomType roomType = room.getRoomType();
-        BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
-
+        BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
+        
         // Create a new reservation
-        Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, null, roomType, room, null);
+        Reservation reservation = new Reservation();
+        reservation.setCheckInDate(checkIn);
+        reservation.setCheckOutDate(checkOut);
+        reservation.setStatus(ReservationStatusEnum.RESERVED);
+        reservation.setTotalAmount(totalAmount);
+        reservation.setPartner(partner);
+        reservation.setRoom(room);
+        reservation.setRoomType(roomType);
+        reservation.setGuest(null);
         return reservationSessionBeanLocal.createReservation(reservation);
     }
 
@@ -112,12 +115,7 @@ public class ReservationSystemWebService {
     public Reservation viewPartnerReservationDetails(@WebParam(name = "reservationId") Long reservationId) {
         try {
             Reservation reservation = reservationSessionBeanLocal.viewReservation(reservationId);
-            if (reservation != null) {
-                em.detach(reservation);
-                em.detach(reservation.getRoomType());
-                em.detach(reservation.getPartner());
-                return reservation;
-            }
+            return detachReservation(reservation);
         } catch (ReservationNotFoundException e) {
             System.out.println("Error retrieving reservation details: " + e.getMessage());
         }
@@ -128,10 +126,9 @@ public class ReservationSystemWebService {
     public List<Reservation> viewAllPartnerReservations(@WebParam(name = "partnerId") Long partnerId) {
         try {
             List<Reservation> reservations = reservationSessionBeanLocal.viewAllReservationsPartner(partnerId);
+            List<Reservation> detachedReservations = new ArrayList();
             for (Reservation r : reservations) {
-                em.detach(r);
-                em.detach(r.getRoomType());
-                em.detach(r.getPartner());
+                detachedReservations.add(detachReservation(r));
             }
             return reservations;
         } catch (Exception e) {
@@ -149,12 +146,12 @@ public class ReservationSystemWebService {
         BigDecimal rate = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
         return rate;
     }
-    
+
     @WebMethod(operationName = "getRoomById")
     public Room getRoomById(@WebParam(name = "roomId") Long roomId) throws RoomNotFoundException {
         return roomSessionBeanLocal.getRoomById(roomId);
     }
-    
+
     @WebMethod(operationName = "getPublishedRateForRoomType")
     public RoomRate getPublishedRateForRoomType(
             @WebParam(name = "roomType") RoomType roomType,
@@ -163,7 +160,70 @@ public class ReservationSystemWebService {
 
         Date checkIn = checkInDate.toGregorianCalendar().getTime();
         Date checkOut = checkOutDate.toGregorianCalendar().getTime();
-        return roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkIn, checkOut);
+        return detachRoomRate(roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkIn, checkOut));
+    }
+
+    private Room detachRoom(Room room) {
+        if (room == null) {
+            return null;
+        }
+
+        Room detachedRoom = new Room();
+        detachedRoom.setRoomID(room.getRoomID());
+        detachedRoom.setFormattedRoomSequence(room.getFormattedRoomSequence());
+        detachedRoom.setStatus(room.getStatus());
+
+        // Detach references to prevent cyclic dependencies
+        detachedRoom.setRoomType(detachRoomType(room.getRoomType()));
+        return detachedRoom;
+    }
+
+    private RoomType detachRoomType(RoomType roomType) {
+        if (roomType == null) {
+            return null;
+        }
+
+        RoomType detachedRoomType = new RoomType();
+        detachedRoomType.setRoomTypeID(roomType.getRoomTypeID());
+        detachedRoomType.setName(roomType.getName());
+
+        // Detach relationships to prevent cyclic dependencies
+        detachedRoomType.setRoomRates(null); // Detach room rates
+        detachedRoomType.setRooms(null); // Detach rooms
+        return detachedRoomType;
+    }
+
+    private Reservation detachReservation(Reservation reservation) {
+        if (reservation == null) {
+            return null;
+        }
+
+        Reservation detachedReservation = new Reservation();
+        detachedReservation.setReservationID(reservation.getReservationID());
+        detachedReservation.setCheckInDate(reservation.getCheckInDate());
+        detachedReservation.setCheckOutDate(reservation.getCheckOutDate());
+        detachedReservation.setStatus(reservation.getStatus());
+        detachedReservation.setTotalAmount(reservation.getTotalAmount());
+
+        // Detach related entities
+        detachedReservation.setRoom(detachRoom(reservation.getRoom()));
+        detachedReservation.setRoomType(detachRoomType(reservation.getRoomType()));
+        detachedReservation.setGuest(null); // Detach guest to avoid cycles
+        return detachedReservation;
+    }
+
+    private RoomRate detachRoomRate(RoomRate roomRate) {
+        if (roomRate != null) {
+            roomRate.setRoomType(null);
+        }
+        return roomRate;
+    }
+
+    private Partner detachPartner(Partner partner) {
+        if (partner != null) {
+            partner.setPartnerReservations(null);
+        }
+        return partner;
     }
 
 }

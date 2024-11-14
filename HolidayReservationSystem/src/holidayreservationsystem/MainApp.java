@@ -126,7 +126,6 @@ public class MainApp {
             System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
             String checkOutDateStr = scanner.nextLine().trim();
             searchHotelRoomFunction(checkInDateStr, checkOutDateStr);
-            scanner.nextLine();
             System.out.println("\nTo book room, please log in to Partner Account!");
         } catch (Exception e) {
             System.out.println("An error occurred while searching for rooms: " + e.getMessage());
@@ -173,7 +172,6 @@ public class MainApp {
         } catch (ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
-        System.out.println("\n*** Reserve Hotel Room ***\n");
         System.out.print("Enter Room IDs to Reserve (comma-separated, e.g., 101,102): ");
         String roomIdStr = scanner.nextLine().trim();
         List<Long> selectedRoomIds = Arrays.stream(roomIdStr.split(","))
@@ -233,8 +231,8 @@ public class MainApp {
             System.out.println("\nAvailable Rooms:");
             for (Room room : availableRooms) {
                 BigDecimal rate = service.getReservationSystemWebServicePort().calculateRateForRoomType(room.getRoomType(), checkInXMLDate, checkOutXMLDate);
-                System.out.printf("Room Type: %s | Rate per Night: %s | Total for stay: $%s\n",
-                        room.getRoomType().getName(), rate, rate.multiply(BigDecimal.valueOf(daysBetween(checkInXMLDate, checkOutXMLDate))));
+                System.out.printf("Room ID: %s | Room Type: %s | Rate per Night: %s | Total for stay: $%s\n",
+                        room.getRoomID(), room.getRoomType().getName(), rate, rate.multiply(BigDecimal.valueOf(daysBetween(checkInXMLDate, checkOutXMLDate))));
             }
         } catch (Exception e) {
             System.out.print(e.getMessage());
