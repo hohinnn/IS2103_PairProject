@@ -102,6 +102,17 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         return reservation;
     }
+    
+    @Override
+    public Reservation viewReservationByPartner(Long reservationID, Long partnerID) throws ReservationNotFoundException {
+        Reservation reservation = em.find(Reservation.class, reservationID);
+
+        if (reservation == null || !reservation.getPartner().getPartnerID().equals(partnerID)) {
+            throw new ReservationNotFoundException("Reservation not found for the current partner.");
+        }
+
+        return reservation;
+    }
 
     @Override
     public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {

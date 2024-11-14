@@ -109,6 +109,12 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
 
         RoomRate bestRate = rates.get(0);
         long days = ChronoUnit.DAYS.between(checkInDate.toInstant(), checkOutDate.toInstant());
+        
+        // If the check-in date is the same as the check-out date, treat as a one-night stay
+        if (days == 0) {
+            days = 1; // Count as 1 night
+        }
+        
         return bestRate.getRatePerNight().multiply(BigDecimal.valueOf(days));
     }
     

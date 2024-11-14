@@ -95,7 +95,11 @@ public class ReservationSystemWebService {
         Date checkOut = checkOutDate.toGregorianCalendar().getTime();
         Room room = roomSessionBeanLocal.getRoomById(roomId);
         Partner partner = em.find(Partner.class, partnerId);
+        if (partner == null) {
+            throw new IllegalArgumentException("Partner not found for ID: " + partnerId);
+        }
         RoomType roomType = room.getRoomType();
+        
         BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
         
         // Create a new reservation
@@ -107,14 +111,19 @@ public class ReservationSystemWebService {
         reservation.setPartner(partner);
         reservation.setRoom(room);
         reservation.setRoomType(roomType);
+        RoomRate roomRate = roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkIn, checkOut);
+        if (roomRate != null) {
+                reservation.setRoomRate(roomRate);
+        }
         reservation.setGuest(null);
         return reservationSessionBeanLocal.createReservation(reservation);
     }
 
     @WebMethod(operationName = "viewPartnerReservationDetails")
-    public Reservation viewPartnerReservationDetails(@WebParam(name = "reservationId") Long reservationId) {
+    public Reservation viewPartnerReservationDetails(@WebParam(name = "reservationId") Long reservationId, 
+            @WebParam(name = "partnerId") Long partnerId) {
         try {
-            Reservation reservation = reservationSessionBeanLocal.viewReservation(reservationId);
+            Reservation reservation = reservationSessionBeanLocal.viewReservationByPartner(reservationId, partnerId);
             return detachReservation(reservation);
         } catch (ReservationNotFoundException e) {
             System.out.println("Error retrieving reservation details: " + e.getMessage());

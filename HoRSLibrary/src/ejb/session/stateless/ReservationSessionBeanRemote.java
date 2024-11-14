@@ -38,4 +38,6 @@ public interface ReservationSessionBeanRemote {
 
     public Reservation viewReservationByGuest(Long reservationID, Long guestID) throws ReservationNotFoundException;
 
+    public Reservation viewReservationByPartner(Long reservationID, Long partnerID) throws ReservationNotFoundException;
+
 }

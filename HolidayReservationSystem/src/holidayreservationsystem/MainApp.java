@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -74,10 +75,19 @@ public class MainApp {
 
         try {
             currentPartner = service.getReservationSystemWebServicePort().partnerLogin(username, password);
+            
+// Check if currentPartner is null
+            if (currentPartner == null) {
+                System.out.println("Invalid login: Partner not found.");
+                return; // Exit if no partner found
+            }
+            
             System.out.println("Login successful! Welcome " + currentPartner.getUsername() + ".\n");
             menuMain();
         } catch (PartnerNotFoundException_Exception e) {
             System.out.println("Invalid login: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -147,14 +157,25 @@ public class MainApp {
             System.out.println("----------------------------");
             System.out.println("1. Make Booking");
             System.out.println("2. Exit");
-            response = scanner.nextInt();
-            scanner.nextLine();
-            switch (response) {
-                case 1:
-                    doReserveHotelRoom(checkInDateStr, checkOutDateStr);
-                    break;
-                case 2:
-                    return;
+            while (true) {
+                System.out.print("Choose an option: ");
+                try {
+                    response = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+
+                    switch (response) {
+                        case 1:
+                            doReserveHotelRoom(checkInDateStr, checkOutDateStr);
+                            return; // Exit after making a booking
+                        case 2:
+                            return; // Exit
+                        default:
+                            System.out.println("Invalid option. Please enter 1 or 2.");
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid input. Please enter a number (1 or 2).");
+                    scanner.nextLine(); // Clear the invalid input
+                }
             }
         } catch (Exception e) {
             System.out.println("An error occurred while searching for rooms: " + e.getMessage());
@@ -184,7 +205,7 @@ public class MainApp {
             List<Long> reservationIDs = new ArrayList<>();
 
             for (Long roomId : selectedRoomIds) {
-            Long reservationID = service.getReservationSystemWebServicePort().reserveRooms(roomId, roomId, checkInXMLDate, checkOutXMLDate);
+            Long reservationID = service.getReservationSystemWebServicePort().reserveRooms(currentPartner.getPartnerID(), roomId, checkInXMLDate, checkOutXMLDate);
                 reservationIDs.add(reservationID);
             }
             System.out.println("Rooms reserved successfully for " + this.currentPartner.getPartnerName() + " from " + checkInDateStr + " to " + checkOutDateStr);
@@ -275,7 +296,7 @@ public class MainApp {
             System.out.println("Status: " + r.getStatus());
             System.out.println("Total Amount: $" + r.getTotalAmount());
         } catch (Exception e) {
-            System.out.println("Reservation Not Found");
+            System.out.println("Reservation Not Found!");
         }
     }
     
