@@ -10,6 +10,7 @@ import entity.RoomAllocation;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.RoomAvailabilityEnum;
+import enumType.RoomRateTypeEnum;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -123,10 +124,9 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
     // Retrieve the next higher room type if available
     private RoomType getNextHigherRoomType(RoomType currentRoomType) {
-        // Assume room types have a priority attribute, with higher numbers being higher tiers
         List<RoomType> higherRoomTypes = em.createQuery(
-                "SELECT rt FROM RoomType rt WHERE rt.priority > :priority ORDER BY rt.priority ASC", RoomType.class)
-                .setParameter("priority", currentRoomType.getPriorityRanking())
+                "SELECT rt FROM RoomType rt WHERE rt.priorityRanking > :priorityRanking ORDER BY rt.priorityRanking ASC", RoomType.class)
+                .setParameter("priorityRanking", currentRoomType.getPriorityRanking())
                 .getResultList();
         return higherRoomTypes.isEmpty() ? null : higherRoomTypes.get(0);
     }
@@ -195,23 +195,23 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
     private BigDecimal getRateForDate(RoomType roomType, Date date) {
         // Check for Promotion Rate first
-        RoomRate promotionRate = findRoomRate(roomType, "PROMOTION", date);
+        RoomRate promotionRate = findRoomRate(roomType, RoomRateTypeEnum.PROMOTION, date);
         if (promotionRate != null) {
             return promotionRate.getRatePerNight();
         }
 
         // Check for Peak Rate if no Promotion Rate is found
-        RoomRate peakRate = findRoomRate(roomType, "PEAK", date);
+        RoomRate peakRate = findRoomRate(roomType, RoomRateTypeEnum.PEAK, date);
         if (peakRate != null) {
             return peakRate.getRatePerNight();
         }
 
         // Use Normal Rate as the default rate
-        RoomRate normalRate = findRoomRate(roomType, "NORMAL", date);
+        RoomRate normalRate = findRoomRate(roomType, RoomRateTypeEnum.NORMAL, date);
         return (normalRate != null) ? normalRate.getRatePerNight() : BigDecimal.ZERO;
     }
 
-    private RoomRate findRoomRate(RoomType roomType, String rateType, Date date) {
+    private RoomRate findRoomRate(RoomType roomType, RoomRateTypeEnum rateType, Date date) {
         TypedQuery<RoomRate> query = em.createQuery(
                 "SELECT rr FROM RoomRate rr WHERE rr.roomType = :roomType AND rr.rateType = :rateType "
                 + "AND (rr.startDate IS NULL OR rr.startDate <= :date) "

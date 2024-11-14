@@ -217,42 +217,61 @@ public class MainApp {
             checkOutDate = dateFormat.parse(checkOutDateStr);
         } catch (ParseException e) {
             System.out.println("Error: " + e.getMessage());
+            return;
         }
         System.out.println("\n*** Reserve Hotel Room ***\n");
-        System.out.print("Enter Room IDs to Reserve (comma-separated, e.g., 101,102): ");
-        String roomIdStr = scanner.nextLine().trim();
-        List<Long> selectedRoomIds = Arrays.stream(roomIdStr.split(","))
-                .map(Long::parseLong)
-                .collect(Collectors.toList());
+    
+        // Step 1: Select Room Type
+        List<RoomType> availableRoomTypes = roomTypeSessionBeanRemote.getAllRoomTypes();
+        System.out.println("Select Room Type:");
+        for (int i = 0; i < availableRoomTypes.size(); i++) {
+            System.out.println((i + 1) + ": " + availableRoomTypes.get(i).getName());
+        }
+        System.out.print("> ");
+        int roomTypeSelection = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        if (roomTypeSelection < 1 || roomTypeSelection > availableRoomTypes.size()) {
+            System.out.println("Invalid room type selection.");
+            return;
+        }
+
+        RoomType selectedRoomType = availableRoomTypes.get(roomTypeSelection - 1);
+
+        // Step 2: Enter the Number of Rooms to Reserve
+        System.out.print("Enter the number of rooms to reserve: ");
+        int numRooms = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        if (numRooms < 1) {
+            System.out.println("Invalid number of rooms.");
+            return;
+        }
 
         try {
+            // Step 3: Calculate the Total Amount for Each Room Reservation
+            BigDecimal totalAmount = roomRateSessionBeanRemote.calculateRateForRoomType(selectedRoomType, checkInDate, checkOutDate);
+            if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                System.out.println("Error: Total amount calculation failed.");
+                return;
+            }
+
             List<Long> reservationIDs = new ArrayList<>();
 
-            for (Long roomId : selectedRoomIds) {
-                Room room = roomSessionBeanRemote.getRoomById(roomId);
-                RoomType roomType = room.getRoomType();
+            // Step 4: Create Multiple Reservations (One for Each Room)
+            for (int i = 0; i < numRooms; i++) {
+                Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, currentGuest, selectedRoomType, null, null);
+                reservation.setRoomRate(roomRateSessionBeanRemote.getPublishedRateForRoomType(selectedRoomType, checkInDate, checkOutDate));
 
-                // Calculate total amount for the reservation
-                BigDecimal totalAmount = roomRateSessionBeanRemote.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
-                if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    System.out.println("Error: Total amount calculation for room ID " + roomId + " failed. Skipping this room.");
-                    continue; // Skip this room if the total amount calculation fails
-                }
-
-                // Create the reservation using the calculated amount
-            Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, this.currentGuest, roomType, room, null);
-            reservation.setRoomRate(roomRateSessionBeanRemote.getPublishedRateForRoomType(roomType, checkInDate, checkOutDate));
-
-            Long reservationID = reservationSessionBeanRemote.createReservation(reservation);
+                Long reservationID = reservationSessionBeanRemote.createReservation(reservation);
                 reservationIDs.add(reservationID);
             }
 
-            System.out.println("Rooms reserved successfully for " + this.currentGuest.getName() + " from " + checkInDateStr + " to " + checkOutDateStr);
+            // Confirmation of Successful Reservations
+            System.out.println("Rooms reserved successfully for " + currentGuest.getName() + " from " + checkInDateStr + " to " + checkOutDateStr);
             for (Long reservationID : reservationIDs) {
                 System.out.println("Reservation ID: " + reservationID);
             }
-        } catch (RoomNotFoundException e) {
-            System.out.println("Room not found error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Error during reservation: " + e.getMessage());
         }

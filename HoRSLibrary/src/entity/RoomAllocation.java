@@ -26,7 +26,7 @@ public class RoomAllocation implements Serializable {
     private Date allocationDate;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "roomId", nullable = false)
+    @JoinColumn(name = "roomId", nullable = true)
     private Room room;
 
     @OneToOne(optional = false)
