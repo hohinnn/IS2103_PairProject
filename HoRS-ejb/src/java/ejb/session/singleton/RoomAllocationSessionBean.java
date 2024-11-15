@@ -67,9 +67,12 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
     @Override
     public void allocateRoomForReservation(Reservation reservation) {
+        
+        if (reservation == null || reservation.getRoomType() == null || reservation.getCheckInDate() == null || reservation.getCheckOutDate() == null) {
+                throw new IllegalArgumentException("Invalid reservation data. Please check the reservation fields.");
+            }
         // Check if the reservation already has an allocated room
         if (reservation.getRoom() != null && reservation.getStatus() == ReservationStatusEnum.ALLOCATED) {
-            logRoomAllocationException(reservation, "Room already allocated for this reservation.");
             return; // Early return to avoid reallocating an already allocated room
         }
 
@@ -77,6 +80,19 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
                 reservation.getRoomType(), 
                 reservation.getCheckInDate(), 
                 reservation.getCheckOutDate());
+        
+        if (allocatedRoom == null) {
+            // Log a Type 2 exception if no rooms are available
+            logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types.");
+            return;
+        }
+
+        // Check if the allocated room's type is different from the requested room type
+        if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
+            logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier.");
+            return;
+        
+        }
 
         // Check if the allocated room is available and not already occupied
         if (allocatedRoom != null && allocatedRoom.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
@@ -95,15 +111,10 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
             reservation.setRoomRate(roomRateSessionBeanLocal.getPublishedRateForRoomType(
                 allocatedRoom.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate()));
 
+            
             em.merge(reservation); // Update reservation details in the database
 
-            if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
-                    logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier.");
-                }
-                } else {
-                    // Log a Type 2 exception if no rooms are available
-                    logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types.");
-                }
+        }
     }
 
     // Finds an available room in the requested room type or next higher tier

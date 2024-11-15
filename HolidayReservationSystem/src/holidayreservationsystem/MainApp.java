@@ -200,7 +200,7 @@ public class MainApp {
         for (int i = 0; i < availableRoomTypes.size(); i++) {
             System.out.println((i + 1) + ": " + availableRoomTypes.get(i).getName());
         }
-        System.out.println("");
+        System.out.println(">");
         int response = scanner.nextInt();
         scanner.nextLine();
         Long roomTypeId = availableRoomTypes.get(response-1).getRoomTypeID();

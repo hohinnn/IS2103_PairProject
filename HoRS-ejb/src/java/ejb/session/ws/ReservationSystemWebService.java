@@ -22,6 +22,7 @@ import exceptions.RoomNotFoundException;
 import exceptions.RoomTypeNotFoundException;
 import java.math.BigDecimal;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -120,8 +121,8 @@ public class ReservationSystemWebService {
             throw new RoomNotFoundException("No available rooms for the specified room type and date range.");
         }
 
-        // Calculate total rate for the stay
-        BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
+        long days = ChronoUnit.DAYS.between(checkIn.toInstant(), checkOut.toInstant());
+        BigDecimal totalAmount = (roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut)).multiply(BigDecimal.valueOf(days));
 
 
         // Create a new reservation

@@ -961,18 +961,24 @@ public class MainApp {
     }
     
     public void allocateRoomsForDate() {
-    System.out.println("Enter check-in date (yyyy-MM-dd) for room allocation or press Enter for today's date:");
-    String input = scanner.nextLine();
-    Date date;
+        System.out.println("Enter check-in date (yyyy-MM-dd) for room allocation or press Enter for today's date:");
+        String input = scanner.nextLine();
+        Date date;
 
-    try {
-        date = input.isEmpty() ? new Date() : dateFormat.parse(input);
-        roomAllocationSessionBeanRemote.allocateRoomsForDate(date);
-        System.out.println("Room allocation completed for " + dateFormat.format(date));
-    } catch (ParseException e) {
-        System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+        try {
+            date = input.isEmpty() ? new Date() : dateFormat.parse(input);
+            roomAllocationSessionBeanRemote.allocateRoomsForDate(date);
+            System.out.println("Room allocation completed for " + dateFormat.format(date));
+        } catch (ParseException e) {
+            System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
+        }catch (IllegalStateException e) {
+            // Handle the specific exception thrown from allocateRoomForReservation
+            System.out.println("Error during room allocation: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle any other exceptions
+            System.out.println("An error has occurred: " + e.getMessage());
+        }
     }
-}
 
     private void viewAllRoomRates() {
         System.out.println("\n*** Room Rates List ***");
