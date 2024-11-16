@@ -46,7 +46,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
     private RoomRateSessionBeanLocal roomRateSessionBeanLocal;
     
     @Override
-    @Schedule(hour = "2", minute = "0", persistent = true)
+    @Schedule(hour = "2", minute = "00", timezone = "Asia/Singapore", persistent = true)
     public void allocateRoomsDaily() {
         Date today = new Date();
         allocateRoomsForDate(today);

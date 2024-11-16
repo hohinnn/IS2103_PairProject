@@ -127,24 +127,27 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     }
 
     @Override
-    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, Date searchTime, List<Room> rooms) {
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, Date searchTime, int numRooms, Long roomTypeID) {
         Guest guest = new Guest();
         guest.setName(guestName);
         guest.setPhoneNumber(phoneNumber);
         guest.setEmail(email);
         guest.setPassportNumber(passportNumber);
         em.persist(guest);
+        
+        RoomType roomType = em.find(RoomType.class, roomTypeID);
 
         Date currentDate = new Date();
         // Immediate check-in after 2am
         boolean immediateCheckIn =  checkInDate.equals(currentDate) && searchTime.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
 
         List<Reservation> reservations = new ArrayList<>();
-        for (Room room : rooms) {
-            RoomType roomType = room.getRoomType();
+        
+        
+        for (int i = 0; i < numRooms; i++) {
             BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
 
-            Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, guest, roomType, room, null);
+            Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, guest, roomType, null, null);
             
             // Fetch and assign the room rate
             RoomRate roomRate = roomRateSessionBeanLocal.getPublishedRateForRoomType(roomType, checkInDate, checkOutDate);
@@ -154,6 +157,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             em.persist(reservation);
             reservations.add(reservation);
         }
+        
         if (immediateCheckIn) {
             for (Reservation r : reservations) {
                 roomAllocationSessionBeanLocal.allocateRoomForReservation(r);
