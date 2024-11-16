@@ -45,10 +45,12 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
     @EJB
     private RoomRateSessionBeanLocal roomRateSessionBeanLocal;
     
-    @Override
+    
     @Schedule(hour = "2", minute = "00", timezone = "Asia/Singapore", persistent = true)
+    @Override
     public void allocateRoomsDaily() {
         Date today = new Date();
+        System.out.println("Starting daily allocation for date: " + today);
         allocateRoomsForDate(today);
     }
 
@@ -60,7 +62,9 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
                 .setParameter("date", date)
                 .getResultList();
 
+        System.out.println("Found " + reservations.size() + " reservations for today");
         for (Reservation reservation : reservations) {
+            System.out.println("Processing reservation ID: " + reservation.getReservationID());
             allocateRoomForReservation(reservation);
         }
     }
@@ -83,13 +87,13 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
         
         if (allocatedRoom == null) {
             // Log a Type 2 exception if no rooms are available
-            logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types.");
+            logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types. Manual Handling Required");
             return;
         }
 
         // Check if the allocated room's type is different from the requested room type
         if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
-            logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier.");
+            logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier, from " + reservation.getRoomType().getName() + " to " + allocatedRoom.getRoomType().getName());
             return;
         
         }
