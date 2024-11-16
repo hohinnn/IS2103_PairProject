@@ -7,7 +7,6 @@ package ejb.session.stateless;
 import entity.Room;
 import entity.RoomRate;
 import entity.RoomType;
-import enumType.RoomTypeEnum;
 import exceptions.RoomTypeNotFoundException;
 import java.util.List;
 import javax.ejb.Stateless;
@@ -42,10 +41,11 @@ public class RoomTypeSessionBean implements RoomTypeSessionBeanRemote, RoomTypeS
     }
     
     @Override
-    public void updateRoomType(Long roomTypeID, RoomTypeEnum name, String description, double size, String bedType, int capacity, String amenities) {
+    public void updateRoomType(Long roomTypeID, String name, int priorityRanking, String description, double size, String bedType, int capacity, String amenities) {
         RoomType roomType = em.find(RoomType.class, roomTypeID);
         if (roomType != null) {
             roomType.setName(name);
+            roomType.setPriorityRanking(priorityRanking);
             roomType.setDescription(description);
             roomType.setSize(size);
             roomType.setBedType(bedType);

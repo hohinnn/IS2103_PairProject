@@ -4,7 +4,6 @@
  */
 package entity;
 
-import enumType.RoomTypeEnum;
 import java.io.Serializable;
 import javax.persistence.*;
 import java.util.*;
@@ -23,9 +22,8 @@ public class RoomType implements Serializable {
     //@Column(nullable = false, unique = true)
     //private String name;
     
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true)
-    private RoomTypeEnum name;
+    private String name;
     
     @Column
     private int priorityRanking;
@@ -53,21 +51,17 @@ public class RoomType implements Serializable {
 
     public RoomType(){}
     
-    public RoomType(RoomTypeEnum name, String description, double size, String bedType, int capacity, String amenities) {
+    public RoomType(String name, int priorityRanking, String description, double size, String bedType, int capacity, String amenities) {
         this();
         this.name = name;
+        this.priorityRanking = priorityRanking;
         this.description = description;
         this.size = size;
         this.bedType = bedType;
         this.capacity = capacity;
         this.amenities = amenities;
-        this.rooms = new ArrayList<Room>();
-        this.roomRates = new ArrayList<RoomRate>();
-        if (name == RoomTypeEnum.DELUXE) this.priorityRanking = 1;
-        else if (name == RoomTypeEnum.PREMIER) this.priorityRanking = 2;
-        else if (name == RoomTypeEnum.FAMILY) this.priorityRanking = 3;
-        else if (name == RoomTypeEnum.JUNIOR_SUITE) this.priorityRanking = 4;
-        else if (name == RoomTypeEnum.GRAND_SUITE) this.priorityRanking = 5;
+        this.rooms = new ArrayList<>();
+        this.roomRates = new ArrayList<>();
     }
 
     public Long getRoomTypeID() {
@@ -78,11 +72,11 @@ public class RoomType implements Serializable {
         this.roomTypeID = roomTypeID;
     }
 
-    public RoomTypeEnum getName() {
+    public String getName() {
         return name;
     }
 
-    public void setName(RoomTypeEnum name) {
+    public void setName(String name) {
         this.name = name;
     }
 

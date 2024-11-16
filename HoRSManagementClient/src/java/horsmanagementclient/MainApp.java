@@ -23,7 +23,6 @@ import enumType.EmployeeAccessRightEnum;
 import enumType.RoomAvailabilityEnum;
 import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
-import enumType.RoomTypeEnum;
 import exceptions.EmployeeNotFoundException;
 import exceptions.ReservationNotFoundException;
 import exceptions.RoomNotFoundException;
@@ -377,15 +376,30 @@ public class MainApp {
 
     private void createNewRoomType() {
         System.out.println("\n*** New Room Type *** ");
-        System.out.print("Enter Room Type Option "
-                + "\n1.Deluxe "
-                + "\n2.Premier "
-                + "\n3.Family "
-                + "\n4.Junior Suite "
-                + "\n5.Grand Suite "
-                + "\n>");
-        int name = scanner.nextInt();
-        scanner.nextLine();
+        System.out.print("Enter Room Type Name: ");
+        String name = scanner.nextLine();
+        
+        List<RoomType> roomTypes = roomTypeSessionBeanRemote.getAllRoomTypes(); // Retrieve all room types from your data source
+
+        System.out.println("\nCurrent Room Types and Priority Rankings:");
+        for (RoomType roomType : roomTypes) {
+            System.out.println("Room Type: " + roomType.getName() + "| Priority Ranking: " + roomType.getPriorityRanking());
+        }
+        System.out.println("\nEnter Priority Ranking: ");
+        System.out.println("(Existing rankings of other rooms will shift up if contradictions exist): ");
+        System.out.print(">");
+        int newPriorityRanking = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        // Adjust rankings for existing room types
+        for (RoomType roomType : roomTypes) {
+            if (roomType.getPriorityRanking() >= newPriorityRanking) {
+                int pr = roomType.getPriorityRanking() + 1; // Shift rank down
+                roomTypeSessionBeanRemote.updateRoomType(roomType.getRoomTypeID(), roomType.getName(), pr, 
+                        roomType.getDescription(), roomType.getSize(), roomType.getBedType(), roomType.getCapacity(), roomType.getAmenities()); 
+            }
+        }
+    
         System.out.print("Enter Description: ");
         String description = scanner.nextLine();
         System.out.print("Enter Size: ");
@@ -398,38 +412,15 @@ public class MainApp {
         scanner.nextLine();
         System.out.print("Enter Amenities: ");
         String amenities = scanner.nextLine();
-        
-        RoomTypeEnum rtEnum = null;
-        
-        switch(name) {
-            case 1:
-                rtEnum = RoomTypeEnum.DELUXE;
-                break;
-            case 2:
-                rtEnum = RoomTypeEnum.PREMIER;
-                break;
-            case 3:
-                rtEnum = RoomTypeEnum.FAMILY;
-                break;
-            case 4:
-                rtEnum = RoomTypeEnum.JUNIOR_SUITE;
-                break;
-            case 5:
-                rtEnum= RoomTypeEnum.GRAND_SUITE;
-                break;
-            default:
-                System.out.println("Error: Invalid Room Type Option"); //update message
-                return;
-        }
-        
+              
         try {
-            RoomType rt = roomTypeSessionBeanRemote.createRoomType(new RoomType(rtEnum, description, size, bedType, capacity, amenities));
+            RoomType rt = roomTypeSessionBeanRemote.createRoomType(new RoomType(name, newPriorityRanking, description, size, bedType, capacity, amenities));
             System.out.println("New Room Type created successfully! Room Type ID: " + rt.getRoomTypeID() + "\nRoom Type Name: " + rt.getName());
         } catch (Exception e) {
             System.out.println("Error creating Room Rype: " + e.getMessage());
         }
-        
     }
+    
 
     private void viewRoomTypeDetails() {
         System.out.println("\n*** View Room Type Details ***");
@@ -445,6 +436,7 @@ public class MainApp {
                 
                 System.out.println("\n*** Room Type Details ***");
                 System.out.println("Name: " + roomType.getName());
+                System.out.println("Priority Ranking: " + roomType.getPriorityRanking());
                 System.out.println("Description: " + roomType.getDescription());
                 System.out.println("Size: " + roomType.getSize());
                 System.out.println("Bed Type: " + roomType.getBedType());
@@ -485,38 +477,42 @@ public class MainApp {
         System.out.print("Room Type ID: " + roomType.getRoomTypeID() + "\n");
         
         try {
-            // RoomTypeEnum selection
-            System.out.println("Select new Room Type:");
-            System.out.println("1. DELUXE");
-            System.out.println("2. PREMIER");
-            System.out.println("3. FAMILY");
-            System.out.println("4. JUNIOR SUITE");
-            System.out.println("5. GRAND SUITE");
-            System.out.print("Enter option: ");
-            int nameOption = scanner.nextInt();
+            System.out.print("Enter new Room Type Name (current: " + roomType.getName() + "): ");
+            String name = scanner.nextLine().trim();
+            name = name.isEmpty() ? roomType.getName() : name; // Keep current name if input is empty
+
+            // Prompt for Priority Ranking
+            System.out.print("Enter new Priority Ranking (current: " + roomType.getPriorityRanking() + "): ");
+            int newPriorityRanking = scanner.nextInt();
             scanner.nextLine(); // Consume newline
+            
+            // Check if the new ranking is valid
+            if (newPriorityRanking <= 0) {
+                newPriorityRanking = roomType.getPriorityRanking(); // Keep current value if invalid
+            } else {
+                List<RoomType> roomTypes = roomTypeSessionBeanRemote.getAllRoomTypes();
+                boolean rankingExists = false;
 
-            RoomTypeEnum name;
-            switch (nameOption) {
-              case 1:
-                name = RoomTypeEnum.DELUXE;
-                break;
-              case 2:
-                name = RoomTypeEnum.PREMIER;
-                break;
-              case 3:
-                name = RoomTypeEnum.FAMILY;
-                break;
-              case 4:
-                name = RoomTypeEnum.JUNIOR_SUITE;
-                break;
-              case 5:
-                name = RoomTypeEnum.GRAND_SUITE;
-                break;
-              default:
-                throw new IllegalArgumentException("Invalid Room Type selection.");
+                // Check if the new priority ranking currently exists
+                for (RoomType r : roomTypes) {
+                    if (r.getPriorityRanking() == newPriorityRanking) {
+                        rankingExists = true;
+                        break;
+                    }
+                }
+
+                // If the ranking exists, shift up all affected room types
+                if (rankingExists) {
+                    for (RoomType r : roomTypes) {
+                        if (r.getPriorityRanking() >= newPriorityRanking && r.getRoomTypeID() != roomType.getRoomTypeID()) {
+                            int newRanking = r.getPriorityRanking() + 1; 
+                            roomTypeSessionBeanRemote.updateRoomType(r.getRoomTypeID(), r.getName(), newRanking, 
+                                    r.getDescription(), r.getSize(), r.getBedType(), r.getCapacity(), r.getAmenities()); 
+                        }
+                    }
+                }
             }
-
+        
             // Get and update description
             System.out.print("Enter new Description (current: " + roomType.getDescription() + "): ");
             String description = scanner.nextLine().trim();
@@ -545,7 +541,7 @@ public class MainApp {
             amenities = amenities.isEmpty() ? roomType.getAmenities() : amenities;
 
             // Call session bean to update the Room Type
-            roomTypeSessionBeanRemote.updateRoomType(roomType.getRoomTypeID(), name, description, size, bedType, capacity, amenities);
+            roomTypeSessionBeanRemote.updateRoomType(roomType.getRoomTypeID(), name, newPriorityRanking, description, size, bedType, capacity, amenities);
             System.out.println("Room Type updated successfully!");
 
   
@@ -574,7 +570,7 @@ public class MainApp {
         System.out.println("\n*** Room Type List ***");
         List<RoomType> roomTypes = roomTypeSessionBeanRemote.getAllRoomTypes();
         for (RoomType r : roomTypes) {
-            System.out.println("ID: "+ r.getRoomTypeID() + " | Name: " + r.getName());
+            System.out.println("ID: "+ r.getRoomTypeID() + " | Name: " + r.getName() + " | Priority Ranking: " + r.getPriorityRanking());
         }
     }
 

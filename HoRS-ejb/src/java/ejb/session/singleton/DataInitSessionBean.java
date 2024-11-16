@@ -11,7 +11,6 @@ import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
 import enumType.RoomAvailabilityEnum;
 import enumType.RoomRateTypeEnum;
-import enumType.RoomTypeEnum;
 import java.math.BigDecimal;
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
@@ -48,11 +47,11 @@ public class DataInitSessionBean {
     }
 
     private void initializeRoomTypes() {
-        RoomType deluxe = new RoomType(RoomTypeEnum.DELUXE, "Deluxe Room", 30.0, "Queen", 2, "Wi-Fi, TV");
-        RoomType premier = new RoomType(RoomTypeEnum.PREMIER, "Premier Room", 40.0, "King", 3, "Wi-Fi, TV, Sofa");
-        RoomType family = new RoomType(RoomTypeEnum.FAMILY, "Family Room", 50.0, "Double Queen", 4, "Wi-Fi, TV, Kitchenette");
-        RoomType juniorSuite = new RoomType(RoomTypeEnum.JUNIOR_SUITE, "Junior Suite", 60.0, "King", 3, "Wi-Fi, TV, Living Room");
-        RoomType grandSuite = new RoomType(RoomTypeEnum.GRAND_SUITE, "Grand Suite", 80.0, "King", 5, "Wi-Fi, TV, Living Room, Kitchen");
+        RoomType deluxe = new RoomType("Deluxe Room", 1, "A spacious room with modern amenities.", 30.0, "Queen", 2, "Wi-Fi, TV");
+        RoomType premier = new RoomType("Premier Room", 2, "An upscale room with additional features.", 40.0, "King", 3, "Wi-Fi, TV, Sofa");
+        RoomType family = new RoomType("Family Room", 3, "Designed for families, with ample space.", 50.0, "Double Queen", 4, "Wi-Fi, TV, Kitchenette");
+        RoomType juniorSuite = new RoomType("Junior Suite", 4, "A suite with a separate living area.", 60.0, "King", 3, "Wi-Fi, TV, Living Room");
+        RoomType grandSuite = new RoomType("Grand Suite", 5, "A luxurious suite with top-tier amenities.", 80.0, "King", 5, "Wi-Fi, TV, Living Room, Kitchen");
 
         em.persist(deluxe);
         em.persist(premier);
@@ -63,20 +62,20 @@ public class DataInitSessionBean {
 
     private void initializeRoomRates() {
         RoomType deluxe = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.DELUXE)
+                .setParameter("name", "Deluxe Room")
                 .getSingleResult();
         RoomType premier = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.PREMIER)
-                .getSingleResult();
+                    .setParameter("name", "Premier Room")
+                    .getSingleResult();
         RoomType family = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.FAMILY)
-                .getSingleResult();
+                    .setParameter("name", "Family Room")
+                    .getSingleResult();
         RoomType juniorSuite = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.JUNIOR_SUITE)
-                .getSingleResult();
+                    .setParameter("name", "Junior Suite")
+                    .getSingleResult();
         RoomType grandSuite = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.GRAND_SUITE)
-                .getSingleResult();
+                    .setParameter("name", "Grand Suite")
+                    .getSingleResult();
 
         RoomRate deluxePublished = new RoomRate("Deluxe Room Published", RoomRateTypeEnum.PUBLISHED, new BigDecimal(100), null, null);
         deluxePublished.setRoomType(deluxe);
@@ -122,20 +121,20 @@ public class DataInitSessionBean {
 
     private void initializeRooms() {
         RoomType deluxe = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.DELUXE)
+                .setParameter("name", "Deluxe Room")
                 .getSingleResult();
         RoomType premier = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.PREMIER)
-                .getSingleResult();
+                    .setParameter("name", "Premier Room")
+                    .getSingleResult();
         RoomType family = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.FAMILY)
-                .getSingleResult();
+                    .setParameter("name", "Family Room")
+                    .getSingleResult();
         RoomType juniorSuite = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.JUNIOR_SUITE)
-                .getSingleResult();
+                    .setParameter("name", "Junior Suite")
+                    .getSingleResult();
         RoomType grandSuite = em.createQuery("SELECT r FROM RoomType r WHERE r.name = :name", RoomType.class)
-                .setParameter("name", RoomTypeEnum.GRAND_SUITE)
-                .getSingleResult();
+                    .setParameter("name", "Grand Suite")
+                    .getSingleResult();
 
         createRoomsForType(deluxe, new String[]{"0101", "0201", "0301", "0401", "0501"});
         createRoomsForType(premier, new String[]{"0102", "0202", "0302", "0402", "0502"});

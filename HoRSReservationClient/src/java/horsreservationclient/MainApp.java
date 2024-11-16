@@ -17,7 +17,6 @@ import entity.Room;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.ReservationStatusEnum;
-import enumType.RoomTypeEnum;
 import exceptions.GuestNotFoundException;
 import exceptions.ReservationNotFoundException;
 import exceptions.RoomNotFoundException;
@@ -455,7 +454,7 @@ if (roomChoice < 1 || roomChoice > availableRooms.size()) {
             System.out.println("No Reservations Found");
         } else {
             for (Reservation r : reservations) {
-                RoomTypeEnum roomTypeName = r.getRoomType().getName(); // Access the room type to initialize it
+                String roomTypeName = r.getRoomType().getName(); // Access the room type to initialize it
                 RoomRate roomRate = r.getRoomRate();
                 
                 System.out.println("Reservation ID: " + r.getReservationID());

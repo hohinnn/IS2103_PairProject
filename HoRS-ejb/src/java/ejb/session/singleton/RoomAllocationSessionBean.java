@@ -174,6 +174,9 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
                 "SELECT rt FROM RoomType rt WHERE rt.priorityRanking > :priorityRanking ORDER BY rt.priorityRanking ASC", RoomType.class)
                 .setParameter("priorityRanking", currentRoomType.getPriorityRanking())
                 .getResultList();
+        if (higherRoomTypes.isEmpty()) {
+            LOGGER.log(Level.INFO, "No higher room types found for {0}", currentRoomType.getName());
+        }
         return higherRoomTypes.isEmpty() ? null : higherRoomTypes.get(0);
     }
 
