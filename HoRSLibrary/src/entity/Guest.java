@@ -33,7 +33,7 @@ public class Guest implements Serializable {
     @Column(length = 32,nullable = true, unique = true)
     private String username;
     
-    @Column(nullable = true, unique = true)
+    @Column(nullable = true, unique = false)
     private String password;
 
     @OneToMany(mappedBy = "guest")
