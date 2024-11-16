@@ -695,7 +695,7 @@ public class MainApp {
         System.out.println("\n*** Room List ***");
         List<Room> rooms = roomSessionBeanRemote.getAllRooms();
         for (Room r : rooms) {
-            System.out.println("Room Number: "+ r.getFormattedRoomSequence() + " | Status: " + r.getStatus());
+            System.out.println("Room Number: "+ r.getFormattedRoomSequence() + " | Status: " + r.getStatus() + " | Room Type: " + r.getRoomType().getName());
         }
     }
 
@@ -793,8 +793,10 @@ public class MainApp {
                     }
                 }
                 
+                viewAllRoomTypes();
+                
                 // Prompt for Room Type
-                System.out.print("Enter Room Type ID: ");
+                System.out.print("\nEnter Room Type ID: ");
                 long roomTypeId = scanner.nextLong();
                 scanner.nextLine();
                 
@@ -986,6 +988,20 @@ public class MainApp {
     
     private void walkInSearchRoom() {
         System.out.print("\n*** Walk-In Room Search ***\n");
+        
+        // Prompt for the time (after 2 AM)
+        System.out.print("Enter Search Time (HH:mm): ");
+        String searchTimeStr = scanner.nextLine().trim(); // E.g., 02:30 for 2:30 AM
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        Date searchTime = null;
+
+        try {
+            searchTime = timeFormat.parse(searchTimeStr);
+        } catch (ParseException e) {
+            System.out.println("Invalid time format. Please enter in HH:mm format.");
+            return;
+        }
+        
         System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
         String checkInDateStr = scanner.nextLine().trim();
         System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
@@ -1022,13 +1038,13 @@ public class MainApp {
             }
 
             // Prompt to reserve rooms
-            System.out.print("Enter Room IDs to Reserve (comma-separated, e.g., 101,102): ");
+            System.out.print("Enter Room IDs to Reserve (comma-separated, no spaces e.g., 11,12): ");
             String roomIdStr = scanner.nextLine().trim();
             List<Long> selectedRoomIds = Arrays.stream(roomIdStr.split(","))
                                                .map(Long::parseLong)
                                                .collect(Collectors.toList());
 
-            walkInReserveRoom(selectedRoomIds, checkInDate, checkOutDate);
+            walkInReserveRoom(selectedRoomIds, checkInDate, checkOutDate, searchTime);
         } catch (ParseException e) {
             System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");
         }
@@ -1036,7 +1052,7 @@ public class MainApp {
 
 
     //Reserve room(s) shown in search
-    private void walkInReserveRoom(List<Long> roomIds, Date checkInDate, Date checkOutDate) {
+    private void walkInReserveRoom(List<Long> roomIds, Date checkInDate, Date checkOutDate, Date searchTime) {
         System.out.print("Enter Guest Name: ");
         String guestName = scanner.nextLine().trim();
         System.out.print("Enter Contact Number: ");
@@ -1052,7 +1068,7 @@ public class MainApp {
             rooms.add(roomSessionBeanRemote.getRoomById(roomId));  
         }
 
-        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, email, passportNumber, checkInDate, checkOutDate, rooms);        
+        List<Reservation> reservations = reservationSessionBeanRemote.walkInReserveRooms(guestName, contactNumber, email, passportNumber, checkInDate, checkOutDate, searchTime, rooms);        
         System.out.println("Rooms reserved successfully for " + guestName + " from " + checkInDate + " to " + checkOutDate);
         for (Reservation reservation : reservations) {
             System.out.println("Reservation ID: " + reservation.getReservationID() + ", Room: " + reservation.getRoom().getFormattedRoomSequence() + ", Status: " + reservation.getStatus());

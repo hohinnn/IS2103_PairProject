@@ -127,7 +127,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
     }
 
     @Override
-    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, List<Room> rooms) {
+    public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, Date searchTime, List<Room> rooms) {
         Guest guest = new Guest();
         guest.setName(guestName);
         guest.setPhoneNumber(phoneNumber);
@@ -137,7 +137,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         Date currentDate = new Date();
         // Immediate check-in after 2am
-        boolean immediateCheckIn = checkInDate.equals(currentDate) && currentDate.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
+        boolean immediateCheckIn =  checkInDate.equals(currentDate) && searchTime.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
 
         List<Reservation> reservations = new ArrayList<>();
         for (Room room : rooms) {
@@ -153,6 +153,11 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             }
             em.persist(reservation);
             reservations.add(reservation);
+        }
+        if (immediateCheckIn) {
+            for (Reservation r : reservations) {
+                roomAllocationSessionBeanLocal.allocateRoomForReservation(r);
+            }
         }
 
         em.flush();
