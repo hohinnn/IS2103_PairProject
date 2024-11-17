@@ -44,8 +44,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
 
     @EJB
     private RoomRateSessionBeanLocal roomRateSessionBeanLocal;
-    
-    
+
     @Schedule(hour = "2", minute = "00", timezone = "Asia/Singapore", persistent = true)
     @Override
     public void allocateRoomsDaily() {
@@ -58,33 +57,34 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
     @Override
     public void allocateRoomsForDate(Date date) {
         List<Reservation> reservations = em.createQuery(
-                "SELECT r FROM Reservation r WHERE r.checkInDate = :date ORDER BY r.roomType.priorityRanking ASC", Reservation.class)
+                "SELECT r FROM Reservation r WHERE r.checkInDate = :date AND r.status = :reservedStatus ORDER BY r.roomType.priorityRanking ASC", Reservation.class)
                 .setParameter("date", date)
+                .setParameter("reservedStatus", ReservationStatusEnum.RESERVED)
                 .getResultList();
 
         System.out.println("Found " + reservations.size() + " reservations for today");
         for (Reservation reservation : reservations) {
             System.out.println("Processing reservation ID: " + reservation.getReservationID());
-            allocateRoomForReservation(reservation);
+            allocateRoomForReservation(reservation.getReservationID());
         }
     }
 
     @Override
-    public void allocateRoomForReservation(Reservation reservation) {
-        
+    public void allocateRoomForReservation(Long reservationID) {
+        Reservation reservation = em.find(Reservation.class, reservationID);
         if (reservation == null || reservation.getRoomType() == null || reservation.getCheckInDate() == null || reservation.getCheckOutDate() == null) {
-                throw new IllegalArgumentException("Invalid reservation data. Please check the reservation fields.");
-            }
+            throw new IllegalArgumentException("Invalid reservation data. Please check the reservation fields.");
+        }
         // Check if the reservation already has an allocated room
         if (reservation.getRoom() != null && reservation.getStatus() == ReservationStatusEnum.ALLOCATED) {
             return; // Early return to avoid reallocating an already allocated room
         }
 
         Room allocatedRoom = findAvailableRoomOrUpgrade(
-                reservation.getRoomType(), 
-                reservation.getCheckInDate(), 
+                reservation.getRoomType().getRoomTypeID(),
+                reservation.getCheckInDate(),
                 reservation.getCheckOutDate());
-        
+
         if (allocatedRoom == null) {
             // Log a Type 2 exception if no rooms are available
             logRoomAllocationException(reservation, "Type 2: No rooms available for the requested or higher room types. Manual Handling Required");
@@ -94,17 +94,19 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
         // Check if the allocated room's type is different from the requested room type
         if (!allocatedRoom.getRoomType().equals(reservation.getRoomType())) {
             logRoomAllocationException(reservation, "Type 1: Room upgraded to next higher tier, from " + reservation.getRoomType().getName() + " to " + allocatedRoom.getRoomType().getName());
-            return;
-        
         }
 
         // Check if the allocated room is available and not already occupied
-        if (allocatedRoom != null && allocatedRoom.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
+        if (allocatedRoom.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
+            reservation = em.find(Reservation.class, reservation.getReservationID());
+            allocatedRoom = em.find(Room.class, allocatedRoom.getRoomID());
+
             // Assign the room to the reservation
             reservation.setRoom(allocatedRoom);
             allocatedRoom.setStatus(RoomAvailabilityEnum.OCCUPIED); // Mark room as occupied
             reservation.setStatus(ReservationStatusEnum.ALLOCATED);
             em.merge(allocatedRoom); // Update room status in the database
+            em.flush();
 
             // Calculate the total amount based on the prevailing rates for each night of stay
             BigDecimal totalAmount = calculateTotalAmount(reservation);
@@ -113,42 +115,42 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
             // Make sure to correctly set the room type and rate
             reservation.setRoomType(allocatedRoom.getRoomType());
             reservation.setRoomRate(roomRateSessionBeanLocal.getPublishedRateForRoomType(
-                allocatedRoom.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate()));
+                    allocatedRoom.getRoomType(), reservation.getCheckInDate(), reservation.getCheckOutDate()));
 
-            
             em.merge(reservation); // Update reservation details in the database
+            em.flush();
 
         }
     }
 
     // Finds an available room in the requested room type or next higher tier
-    private Room findAvailableRoomOrUpgrade(RoomType requestedRoomType, Date checkInDate, Date checkOutDate) {
+    private Room findAvailableRoomOrUpgrade(Long requestedRoomTypeID, Date checkInDate, Date checkOutDate) {
         // First, try to find an available room in the requested room type
-        Room availableRoom = findAvailableRoom(requestedRoomType, checkInDate, checkOutDate);
+        RoomType requestedRoomType = em.find(RoomType.class, requestedRoomTypeID);
+        Room availableRoom = findAvailableRoom(requestedRoomTypeID, checkInDate, checkOutDate);
         if (availableRoom != null) {
             return availableRoom;
         }
 
         // If no room is available in the requested type, upgrade to a higher room type
-        RoomType currentRoomType = getNextHigherRoomType(requestedRoomType);
+        RoomType currentRoomType = requestedRoomType;
         while (currentRoomType != null) {
-            availableRoom = findAvailableRoom(currentRoomType, checkInDate, checkOutDate);
+            currentRoomType = getNextHigherRoomType(currentRoomType.getRoomTypeID());
+            availableRoom = findAvailableRoom(currentRoomType.getRoomTypeID(), checkInDate, checkOutDate);
             if (availableRoom != null) {
-                return availableRoom;
+                return availableRoom; // Found an available upgraded room
             }
-            currentRoomType = getNextHigherRoomType(currentRoomType); // Try upgrading to a higher room type if needed
         }
 
         return null; // No rooms available even after attempting upgrades
     }
 
-
-    private Room findAvailableRoom(RoomType roomType, Date checkInDate, Date checkOutDate) {
+    private Room findAvailableRoom(Long roomTypeID, Date checkInDate, Date checkOutDate) {
+        RoomType roomType = em.find(RoomType.class, roomTypeID);
         List<Room> rooms = em.createQuery(
-                "SELECT r FROM Room r WHERE r.roomType = :roomType AND r.status != :occupiedStatus AND r.status != :disabledStatus", Room.class)
+                "SELECT r FROM Room r WHERE r.roomType = :roomType AND r.status = :availableStatus", Room.class)
                 .setParameter("roomType", roomType)
-                .setParameter("occupiedStatus", RoomAvailabilityEnum.OCCUPIED)  // Exclude rooms with 'OCCUPIED' status
-                .setParameter("disabledStatus", RoomAvailabilityEnum.DISABLED)  // Exclude rooms with 'DISABLED' status
+                .setParameter("availableStatus", RoomAvailabilityEnum.AVAILABLE)
                 .getResultList();
 
         for (Room room : rooms) {
@@ -160,7 +162,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
                     .setParameter("room", room)
                     .setParameter("checkInDate", checkInDate)
                     .setParameter("checkOutDate", checkOutDate)
-                    .setParameter("allocatedStatus", ReservationStatusEnum.ALLOCATED)  // Exclude 'ALLOCATED' reservations
+                    .setParameter("allocatedStatus", ReservationStatusEnum.ALLOCATED) // Exclude 'ALLOCATED' reservations
                     .getResultList();
 
             if (overlappingReservations.isEmpty() && room.getStatus() == RoomAvailabilityEnum.AVAILABLE) {
@@ -170,10 +172,9 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
         return null; // No available rooms found for the specified period
     }
 
-
-
     // Retrieve the next higher room type if available
-    private RoomType getNextHigherRoomType(RoomType currentRoomType) {
+    private RoomType getNextHigherRoomType(Long currentRoomTypeID) {
+        RoomType currentRoomType = em.find(RoomType.class, currentRoomTypeID);
         List<RoomType> higherRoomTypes = em.createQuery(
                 "SELECT rt FROM RoomType rt WHERE rt.priorityRanking > :priorityRanking ORDER BY rt.priorityRanking ASC", RoomType.class)
                 .setParameter("priorityRanking", currentRoomType.getPriorityRanking())

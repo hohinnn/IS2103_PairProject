@@ -623,20 +623,32 @@ public class MainApp {
             System.out.println("Enter new Room Status: (current: " + room.getStatus() + ")");
             System.out.println("1. AVAILABLE");
             System.out.println("2. OCCUPIED");
+            System.out.println("3. DISABLED");
 
             int intStatus = -1;
-            while (intStatus < 1 || intStatus > 2) {
+            while (intStatus < 1 || intStatus > 3) {
                 intStatus = scanner.nextInt();
                 scanner.nextLine();
 
-                if (intStatus < 1 || intStatus > 2) {
+                if (intStatus < 1 || intStatus > 3) {
                     System.out.println("Invalid option. Please try again.");
                 }
             }
 
-            RoomAvailabilityEnum newStatus = (intStatus == 1)
-                    ? RoomAvailabilityEnum.AVAILABLE
-                    : RoomAvailabilityEnum.OCCUPIED;
+            RoomAvailabilityEnum newStatus;
+            switch (intStatus) {
+                case 1:
+                    newStatus = RoomAvailabilityEnum.AVAILABLE;
+                    break;
+                case 2:
+                    newStatus = RoomAvailabilityEnum.OCCUPIED;
+                    break;
+                case 3:
+                    newStatus = RoomAvailabilityEnum.DISABLED; 
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid status selected."); // This case will not be used due to validation
+            }
 
             roomSessionBeanRemote.updateRoomStatus(roomNumber, newStatus);
             System.out.println("Room updated successfully!");

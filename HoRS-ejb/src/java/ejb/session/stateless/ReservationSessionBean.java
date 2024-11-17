@@ -166,7 +166,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         
         if (immediateCheckIn) {
             for (Reservation r : reservations) {
-                roomAllocationSessionBeanLocal.allocateRoomForReservation(r);
+                roomAllocationSessionBeanLocal.allocateRoomForReservation(r.getReservationID());
                 System.out.println("Reservation ID: " + r.getReservationID() + ", Status: " + r.getStatus());
             }
         }
@@ -228,7 +228,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         // For same-day check-ins after 2 am, allocate a specific room immediately
         if (isImmediateCheckIn) {
-            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservation);
+            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservationID);
         }
 
         return reservationID;
@@ -255,7 +255,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         // For same-day check-ins after 2 am, allocate a specific room immediately
         if (isImmediateCheckIn) {
-            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservation);
+            roomAllocationSessionBeanLocal.allocateRoomForReservation(reservationID);
         }
 
         return reservationID;

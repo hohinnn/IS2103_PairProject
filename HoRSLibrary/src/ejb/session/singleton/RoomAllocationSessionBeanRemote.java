@@ -22,13 +22,12 @@ public interface RoomAllocationSessionBeanRemote {
     
     public void allocateRoomsDaily();
 
-    public void allocateRoomForReservation(Reservation reservation);
-    
+    public void allocateRoomForReservation(Long reservationID);
+
     public void allocateRoomsForDate(Date date);
-    
+
     public List<RoomAllocation> retrieveRoomAllocationExceptions();
 
     public boolean checkRoomTypeAvailability(RoomType roomType, Date checkInDate, Date checkOutDate);
-
 
 }

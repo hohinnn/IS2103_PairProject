@@ -80,7 +80,7 @@ public class ReservationSystemWebService {
             @WebParam(name = "checkOutDate") XMLGregorianCalendar checkOutDate) {
         Date checkIn = checkInDate.toGregorianCalendar().getTime();
         Date checkOut = checkOutDate.toGregorianCalendar().getTime();
-        List<Room> availableRooms = partnerSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
+        List<Room> availableRooms = roomSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
         List<Room> detachedRooms = new ArrayList<>();
         for (Room room : availableRooms) {
             detachedRooms.add(detachRoom(room));
@@ -110,7 +110,7 @@ public class ReservationSystemWebService {
         }
 
         // Get available rooms of the specified room type
-        List<Room> availableRooms = roomSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
+        List<Room> availableRooms = partnerSessionBeanLocal.searchAvailableRooms(checkIn, checkOut);
 
         // Filter available rooms by the requested room type
         List<Room> availableRoomOfType = availableRooms.stream()
@@ -222,8 +222,14 @@ public class ReservationSystemWebService {
         detachedRoom.setFormattedRoomSequence(room.getFormattedRoomSequence());
         detachedRoom.setStatus(room.getStatus());
 
-        // Detach references to prevent cyclic dependencies
-        detachedRoom.setRoomType(detachRoomType(room.getRoomType()));
+         RoomType roomType = room.getRoomType();
+        if (roomType != null) {
+            RoomType detachedType = detachRoomType(roomType);
+            detachedRoom.setRoomType(detachedType); // Set the detached room type
+        } else {
+            System.out.println("DEBUG: RoomType is null for Room ID: " + room.getRoomID());
+        }
+
         return detachedRoom;
     }
 
@@ -234,11 +240,17 @@ public class ReservationSystemWebService {
 
         RoomType detachedRoomType = new RoomType();
         detachedRoomType.setRoomTypeID(roomType.getRoomTypeID());
-        detachedRoomType.setName(roomType.getName());
+        String name = roomType.getName();
+        if (name == null) {
+            throw new IllegalStateException("RoomType name is null. Ensure it is fetched before detachment.");
+        }
+
+        detachedRoomType.setName(name);
+        detachedRoomType.setPriorityRanking(roomType.getPriorityRanking());
 
         // Detach relationships to prevent cyclic dependencies
         detachedRoomType.setRoomRates(null); // Detach room rates
-        detachedRoomType.setRooms(null); // Detach rooms
+        //detachedRoomType.setRooms(null); // Detach rooms
         return detachedRoomType;
     }
 

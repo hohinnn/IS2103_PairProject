@@ -22,7 +22,7 @@ public interface RoomAllocationSessionBeanLocal {
 
     public void allocateRoomsDaily();
 
-    public void allocateRoomForReservation(Reservation reservation);
+    public void allocateRoomForReservation(Long reservationID);
 
     public void allocateRoomsForDate(Date date);
 

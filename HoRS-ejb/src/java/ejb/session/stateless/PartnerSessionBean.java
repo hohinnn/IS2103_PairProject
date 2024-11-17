@@ -66,9 +66,10 @@ public class PartnerSessionBean implements PartnerSessionBeanRemote, PartnerSess
     
     @Override
     public List<Room> searchAvailableRooms(Date checkInDate, Date checkOutDate) {
-        Query query = em.createQuery("SELECT r FROM Room r WHERE r.roomID NOT IN " +
-                "(SELECT res.room.roomID FROM Reservation res WHERE " +
-                "(res.checkInDate <= :checkOutDate AND res.checkOutDate >= :checkInDate))");
+         Query query = em.createQuery(
+            "SELECT r FROM Room r JOIN FETCH r.roomType rt WHERE r.roomID NOT IN " +
+            "(SELECT res.room.roomID FROM Reservation res WHERE " +
+            "(res.checkInDate <= :checkOutDate AND res.checkOutDate >= :checkInDate))", Room.class);
         query.setParameter("checkInDate", checkInDate);
         query.setParameter("checkOutDate", checkOutDate);
         return query.getResultList();

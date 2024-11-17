@@ -30,7 +30,7 @@ public class Room implements Serializable {
     @Enumerated(EnumType.STRING)
     private RoomAvailabilityEnum status; // e.g., "Available", "Occupied", "Maintenance"
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
     private RoomType roomType;
 

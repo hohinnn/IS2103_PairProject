@@ -75,7 +75,7 @@ public class MainApp {
         try {
             currentPartner = service.getReservationSystemWebServicePort().partnerLogin(username, password);
             
-// Check if currentPartner is null
+            // Check if currentPartner is null
             if (currentPartner == null) {
                 System.out.println("Invalid login: Partner not found.");
                 return; // Exit if no partner found
@@ -200,7 +200,7 @@ public class MainApp {
         for (int i = 0; i < availableRoomTypes.size(); i++) {
             System.out.println((i + 1) + ": " + availableRoomTypes.get(i).getName());
         }
-        System.out.println(">");
+        System.out.print(">");
         int response = scanner.nextInt();
         scanner.nextLine();
         Long roomTypeId = availableRoomTypes.get(response-1).getRoomTypeID();
@@ -276,8 +276,9 @@ public class MainApp {
             System.out.println("\nAvailable Rooms:");
             for (Room room : availableRooms) {
                 BigDecimal rate = service.getReservationSystemWebServicePort().calculateRateForRoomType(room.getRoomType(), checkInXMLDate, checkOutXMLDate);
-                System.out.printf("Room ID: %s | Room Type: %s | Rate per Night: %s | Total for stay: $%s\n",
-                        room.getRoomID(), room.getRoomType().getName(), rate, rate.multiply(BigDecimal.valueOf(daysBetween(checkInXMLDate, checkOutXMLDate))));
+                RoomType roomType = room.getRoomType();
+                System.out.printf("Room ID: %s | Room Type: %s | Total for stay: $%s\n",
+                        room.getRoomID(), roomType.getName(), rate);
             }
         } catch (Exception e) {
             System.out.print(e.getMessage());
