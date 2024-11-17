@@ -15,6 +15,7 @@ import enumType.ReservationStatusEnum;
 import enumType.RoomAvailabilityEnum;
 import exceptions.ReservationNotFoundException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -125,6 +126,11 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         return reservation;
     }
+    
+    private boolean isSameDay(Date date1, Date date2) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date1).equals(sdf.format(date2));
+    }
 
     @Override
     public List<Reservation> walkInReserveRooms(String guestName, String phoneNumber, String email, String passportNumber, Date checkInDate, Date checkOutDate, Date searchTime, int numRooms, Long roomTypeID) {
@@ -139,7 +145,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
 
         Date currentDate = new Date();
         // Immediate check-in after 2am
-        boolean immediateCheckIn =  checkInDate.equals(currentDate) && searchTime.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
+        boolean immediateCheckIn =  isSameDay(checkInDate, currentDate) && searchTime.toInstant().atZone(ZoneId.systemDefault()).getHour() >= 2;
 
         List<Reservation> reservations = new ArrayList<>();
         
@@ -161,6 +167,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         if (immediateCheckIn) {
             for (Reservation r : reservations) {
                 roomAllocationSessionBeanLocal.allocateRoomForReservation(r);
+                System.out.println("Reservation ID: " + r.getReservationID() + ", Status: " + r.getStatus());
             }
         }
 

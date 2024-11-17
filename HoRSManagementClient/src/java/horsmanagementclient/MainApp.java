@@ -20,7 +20,6 @@ import entity.RoomAllocation;
 import entity.RoomRate;
 import entity.RoomType;
 import enumType.EmployeeAccessRightEnum;
-import enumType.ReservationStatusEnum;
 import enumType.RoomAvailabilityEnum;
 import enumType.RoomRateStatusEnum;
 import enumType.RoomRateTypeEnum;
@@ -33,17 +32,10 @@ import exceptions.RoomTypeNotFoundException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.ejb.EJB;
 
 /**

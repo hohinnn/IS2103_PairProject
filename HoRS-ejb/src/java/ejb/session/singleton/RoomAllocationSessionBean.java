@@ -130,7 +130,7 @@ public class RoomAllocationSessionBean implements RoomAllocationSessionBeanRemot
         }
 
         // If no room is available in the requested type, upgrade to a higher room type
-        RoomType currentRoomType = requestedRoomType;
+        RoomType currentRoomType = getNextHigherRoomType(requestedRoomType);
         while (currentRoomType != null) {
             availableRoom = findAvailableRoom(currentRoomType, checkInDate, checkOutDate);
             if (availableRoom != null) {
