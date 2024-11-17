@@ -12,6 +12,7 @@ import exceptions.RoomRateInUseException;
 import exceptions.RoomRateNotFoundException;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Stateless;
@@ -145,6 +146,42 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
         long oneDayMilliseconds = days * 24L * 60L * 60L * 1000L;
         return new Date(milliseconds + oneDayMilliseconds);
     }
+    
+    @Override
+    public BigDecimal calculatePublishedRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate) {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        
+        Date normalizedCheckInDate = normalizeToMidnight(checkInDate);
+        Date normalizedCheckOutDate = normalizeToMidnight(checkOutDate);
+
+        // Loop through each day of the reservation
+        Date currentDate = normalizedCheckInDate;
+        while (currentDate.before(normalizedCheckOutDate)) {
+            // Fetch the published rate for the current date
+            BigDecimal rateForDay = getPublishedRateForDate(roomType, currentDate);
+            totalAmount = totalAmount.add(rateForDay);
+            currentDate = addDays(currentDate, 1); // Move to the next day
+        }
+
+        return totalAmount;
+    }
+
+    private BigDecimal getPublishedRateForDate(RoomType roomType, Date date) {
+        // Fetch the published rate for the room type and date
+        RoomRate publishedRate = findRoomRate(roomType, RoomRateTypeEnum.PUBLISHED, date);
+        return (publishedRate != null) ? publishedRate.getRatePerNight() : BigDecimal.ZERO;
+    }
+    
+    private Date normalizeToMidnight(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
 
     
     // for walk-in search room use case

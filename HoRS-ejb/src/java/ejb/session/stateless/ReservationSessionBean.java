@@ -151,7 +151,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         
         
         for (int i = 0; i < numRooms; i++) {
-            BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
+            BigDecimal totalAmount = roomRateSessionBeanLocal.calculatePublishedRateForRoomType(roomType, checkInDate, checkOutDate);
 
             Reservation reservation = new Reservation(checkInDate, checkOutDate, ReservationStatusEnum.RESERVED, totalAmount, guest, roomType, null, null);
             

@@ -190,7 +190,7 @@ public class MainApp {
     private void displayMenuOptionsGuestRelationOfficer() {
         System.out.println("\n*** HoRS Management Client -- Guest Relation Officer ***\n");
         System.out.println("1: Logout");
-        System.out.println("2: Walk-in Reserve Room");
+        System.out.println("2: Walk-in Search Room");
         System.out.println("3: Check-in Guest");
         System.out.println("4: Check-out Guest");
     }

@@ -25,7 +25,7 @@ import javax.persistence.PersistenceContext;
  */
 @Singleton
 @LocalBean
-//@Startup
+@Startup
 public class DataInitSessionBean {
 
     @PersistenceContext(unitName = "HoRS-ejbPU")
@@ -33,10 +33,27 @@ public class DataInitSessionBean {
 
     @PostConstruct
     public void postConstruct() {
+        if (isDataInitialized()) {
+            System.out.println("Data has already been initialized. Skipping initialization.");
+            return;
+        }
+
+        System.out.println("Initializing data...");
         initializeEmployees();
         initializeRoomTypes();
         initializeRoomRates();
         initializeRooms();
+    }
+
+    private boolean isDataInitialized() {
+        // Check if data exists in the Employee, RoomType, RoomRate, and Room tables
+        Long employeeCount = em.createQuery("SELECT COUNT(e) FROM Employee e", Long.class).getSingleResult();
+        Long roomTypeCount = em.createQuery("SELECT COUNT(rt) FROM RoomType rt", Long.class).getSingleResult();
+        Long roomRateCount = em.createQuery("SELECT COUNT(rr) FROM RoomRate rr", Long.class).getSingleResult();
+        Long roomCount = em.createQuery("SELECT COUNT(r) FROM Room r", Long.class).getSingleResult();
+
+        // If data exists in any of the tables, assume data has been initialized
+        return employeeCount > 0 && roomTypeCount > 0 && roomRateCount > 0 && roomCount > 0;
     }
 
     private void initializeEmployees() {

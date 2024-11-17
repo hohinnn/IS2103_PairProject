@@ -35,5 +35,7 @@ public interface RoomRateSessionBeanRemote {
     public BigDecimal calculateRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate);
 
     public RoomRate getPublishedRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate);
+    
+    public BigDecimal calculatePublishedRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate);
 
 }

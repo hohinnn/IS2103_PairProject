@@ -122,7 +122,7 @@ public class ReservationSystemWebService {
         }
 
         long days = ChronoUnit.DAYS.between(checkIn.toInstant(), checkOut.toInstant());
-        BigDecimal totalAmount = (roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut)).multiply(BigDecimal.valueOf(days));
+        BigDecimal totalAmount = roomRateSessionBeanLocal.calculateRateForRoomType(roomType, checkIn, checkOut);
 
 
         // Create a new reservation
