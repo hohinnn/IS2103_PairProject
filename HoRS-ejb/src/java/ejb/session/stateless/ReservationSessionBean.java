@@ -175,7 +175,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
         return reservations;
     }
 
-    //Marks the reservation as "Checked-In" if it is currently in "Reserved" status. 
+    //Marks the reservation as "Checked-In" if it is currently in "allocated" status. 
     @Override
     public void checkInGuest(long reservationId) throws ReservationNotFoundException {
         Reservation reservation = em.find(Reservation.class, reservationId);
@@ -183,7 +183,7 @@ public class ReservationSessionBean implements ReservationSessionBeanRemote, Res
             throw new ReservationNotFoundException("Reservation ID " + reservationId + " not found.");
         }
 
-        if (!reservation.getStatus().equals(ReservationStatusEnum.RESERVED)) {
+        if (!reservation.getStatus().equals(ReservationStatusEnum.ALLOCATED)) {
             throw new IllegalStateException("Reservation is not in a state that allows check-in.");
         }
 

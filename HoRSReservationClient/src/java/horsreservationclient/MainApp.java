@@ -168,7 +168,7 @@ public class MainApp {
 
     public void doSearchHotelRoomGuest() {
         try {
-            System.out.print("\n*** Walk-In Room Search ***\n");
+            System.out.print("\n*** Room Search ***\n");
             System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
             String checkInDateStr = scanner.nextLine().trim();
             System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
@@ -195,7 +195,7 @@ public class MainApp {
     }
     public void doSearchHotelRoomVisitor() {
         try {
-            System.out.print("\n*** Walk-In Room Search ***\n");
+            System.out.print("\n*** Room Search ***\n");
             System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
             String checkInDateStr = scanner.nextLine().trim();
             System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
@@ -364,18 +364,12 @@ if (roomChoice < 1 || roomChoice > availableRooms.size()) {
             System.out.println("Available Rooms:");
             for (Room room : availableRooms) {
                 RoomType roomType = room.getRoomType();
-                RoomRate publishedRate = roomRateSessionBeanRemote.getPublishedRateForRoomType(roomType, checkInDate, checkOutDate);
 
-                if (publishedRate != null) {
-                    long nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
-                    BigDecimal reservationAmount = publishedRate.getRatePerNight().multiply(BigDecimal.valueOf(nights));
+                BigDecimal reservationAmount = roomRateSessionBeanRemote.calculateRateForRoomType(roomType, checkInDate, checkOutDate);
 
-                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + roomType.getName()
-                            + ", Rate per Night: " + publishedRate.getRatePerNight()
-                            + ", Total for Stay: " + reservationAmount);
-                } else {
-                    System.out.println("Room ID: " + room.getRoomID() + ", Type: " + roomType.getName() + " - No published rate available.");
-                }
+                System.out.println("Room ID: " + room.getRoomID() + ", Type: " + roomType.getName()
+                        + ", Total for Stay: " + reservationAmount);
+
             }
         } catch (ParseException e) {
             System.out.println("Invalid date format. Please enter dates in yyyy-MM-dd format.");

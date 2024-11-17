@@ -19,6 +19,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -95,30 +96,56 @@ public class RoomRateSessionBean implements RoomRateSessionBeanRemote, RoomRateS
     
     @Override
     public BigDecimal calculateRateForRoomType(RoomType roomType, Date checkInDate, Date checkOutDate) {
-        Query query = em.createQuery("SELECT rr FROM RoomRate rr WHERE rr.roomType = :roomType AND " +
-                "(rr.startDate IS NULL OR rr.startDate <= :checkInDate) AND " +
-                "(rr.endDate IS NULL OR rr.endDate >= :checkOutDate) ORDER BY rr.ratePerNight DESC");
-        query.setParameter("roomType", roomType);
-        query.setParameter("checkInDate", checkInDate);
-        query.setParameter("checkOutDate", checkOutDate);
-        
-        List<RoomRate> rates = query.getResultList();
-        if (rates.isEmpty()) {
-            return BigDecimal.ZERO;
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Loop through each day of the reservation
+        Date currentDate = checkInDate;
+        while (currentDate.before(checkOutDate)) {
+            BigDecimal rateForDay = getBestRateForDate(roomType, currentDate);
+            totalAmount = totalAmount.add(rateForDay);
+            currentDate = addDays(currentDate, 1); // Move to the next day
         }
 
-        RoomRate bestRate = rates.get(0);
-        long days = ChronoUnit.DAYS.between(checkInDate.toInstant(), checkOutDate.toInstant());
-        
-        // If the check-in date is the same as the check-out date, treat as a one-night stay
-        if (days == 0) {
-            days = 1; // Count as 1 night
-        }
-        
-        BigDecimal totalAmount = bestRate.getRatePerNight().multiply(BigDecimal.valueOf(days));
-        
         return totalAmount;
     }
+
+    private BigDecimal getBestRateForDate(RoomType roomType, Date date) {
+        // Check for Promotion Rate first (highest priority)
+        RoomRate promotionRate = findRoomRate(roomType, RoomRateTypeEnum.PROMOTION, date);
+        if (promotionRate != null) {
+            return promotionRate.getRatePerNight();
+        }
+
+        // Check for Peak Rate next
+        RoomRate peakRate = findRoomRate(roomType, RoomRateTypeEnum.PEAK, date);
+        if (peakRate != null) {
+            return peakRate.getRatePerNight();
+        }
+
+        // Use Normal Rate as the default rate (lowest priority)
+        RoomRate normalRate = findRoomRate(roomType, RoomRateTypeEnum.NORMAL, date);
+        return (normalRate != null) ? normalRate.getRatePerNight() : BigDecimal.ZERO;
+    }
+
+    private RoomRate findRoomRate(RoomType roomType, RoomRateTypeEnum rateType, Date date) {
+        TypedQuery<RoomRate> query = em.createQuery(
+                "SELECT rr FROM RoomRate rr WHERE rr.roomType = :roomType AND rr.rateType = :rateType " +
+                "AND (rr.startDate IS NULL OR rr.startDate <= :date) " +
+                "AND (rr.endDate IS NULL OR rr.endDate >= :date)", RoomRate.class);
+        query.setParameter("roomType", roomType);
+        query.setParameter("rateType", rateType);
+        query.setParameter("date", date);
+
+        List<RoomRate> rates = query.getResultList();
+        return rates.isEmpty() ? null : rates.get(0);
+    }
+
+    private Date addDays(Date date, int days) {
+        long milliseconds = date.getTime();
+        long oneDayMilliseconds = days * 24L * 60L * 60L * 1000L;
+        return new Date(milliseconds + oneDayMilliseconds);
+    }
+
     
     // for walk-in search room use case
     @Override
